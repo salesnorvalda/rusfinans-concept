@@ -488,7 +488,7 @@ img{display:block; max-width:none}
 #fin.show{opacity:1; pointer-events:auto}
 #fin .in{text-align:center; width:min(880px,92vw); max-height:calc(100vh - 150px); overflow:auto;
   padding:2.4rem clamp(1.4rem,3.5vw,3.2rem);
-  background:rgba(12,7,4,.6); backdrop-filter:blur(10px) saturate(120%);
+  background:rgba(10,6,3,.93);
   border:1px solid rgba(214,178,106,.28); box-shadow:0 40px 100px rgba(0,0,0,.6)}
 #fin h1{font-size:clamp(1.7rem,4vw,3.7rem); font-weight:600; line-height:1.12; text-wrap:balance}
 #fin p{color:var(--ink2); margin:1.1rem 0 1.6rem; font-size:1.05rem}
@@ -878,6 +878,7 @@ function syncUI(){
   $("#sname").innerHTML="<b>"+String(cur).padStart(2,"0")+"</b> · "+STOPS[cur].n;
   $$("#mm .dot").forEach(function(d,i){d.classList.toggle("on",i===cur)});
   $("#fin").classList.toggle("show",cur===STOPS.length-1);
+  $("#lamp").style.display = cur===STOPS.length-1 ? "none" : "";   /* лампа под финалом дёргает композитор на маке */
 }
 /* автокадр: рамка стопа считается по его объектам и вписывается в текущее окно */
 var CHR={top:76,bot:110,side:56};
