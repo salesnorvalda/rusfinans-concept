@@ -878,10 +878,26 @@ function syncUI(){
   $$("#mm .dot").forEach(function(d,i){d.classList.toggle("on",i===cur)});
   $("#fin").classList.toggle("show",cur===STOPS.length-1);
 }
+/* автокадр: рамка стопа считается по его объектам и вписывается в текущее окно */
+var CHR={top:76,bot:110,side:56};
+function frameFor(n){
+  var st=STOPS[n];
+  var objs=$$('.obj[data-stop="'+n+'"]');
+  var l=1e9,t=1e9,r=-1e9,b=-1e9,PAD=44;
+  if(objs.length){
+    objs.forEach(function(e){l=Math.min(l,e.offsetLeft);t=Math.min(t,e.offsetTop);
+      r=Math.max(r,e.offsetLeft+e.offsetWidth);b=Math.max(b,e.offsetTop+e.offsetHeight)});
+    l-=PAD;t-=PAD;r+=PAD;b+=PAD;
+  } else if(n===STOPS.length-1){ l=140;t=140;r=W-140;b=H-140 }
+  else return st;
+  var s=clamp(Math.min((innerWidth-CHR.side*2)/(r-l),(innerHeight-CHR.top-CHR.bot)/(b-t)),.13,1.06);
+  return {x:(l+r)/2, y:(t+b)/2+(CHR.bot-CHR.top)/2/s, s:s};
+}
 function goTo(n){
   n=clamp(n,0,STOPS.length-1);
   cur=n;
-  tgt.x=STOPS[n].x; tgt.y=STOPS[n].y; tgt.s=STOPS[n].s;
+  var f=frameFor(n);
+  tgt.x=f.x; tgt.y=f.y; tgt.s=f.s;
   history.replaceState(null,"","#"+n);
   syncUI();
   if(n===8&&window.playChronicle){ clearTimeout(window._pcT);
@@ -1538,9 +1554,21 @@ var QS=[
 applyPal(0);
 var h=parseInt((location.hash||"").replace("#",""),10);
 if(!isNaN(h)){cur=clamp(h,0,STOPS.length-1)}
-cam.x=STOPS[cur].x+400; cam.y=STOPS[cur].y+300; cam.s=STOPS[cur].s*.6;   /* лёгкий подлёт при открытии */
+var f0=frameFor(cur);
+cam.x=f0.x+400; cam.y=f0.y+300; cam.s=f0.s*.6;   /* лёгкий подлёт при открытии */
 goTo(cur);
 setTimeout(runCnt,900);
+
+/* окно меняется или дозагрузились фото текущего стопа — перекадровка */
+function reframe(){var f=frameFor(cur);tgt.x=f.x;tgt.y=f.y;tgt.s=f.s}
+addEventListener("resize",reframe);
+addEventListener("load",reframe);
+document.addEventListener("load",function(e){
+  if(e.target&&e.target.tagName==="IMG"&&e.target.closest){
+    var o=e.target.closest('.obj[data-stop]');
+    if(o&&+o.dataset.stop===cur)reframe();
+  }
+},true);
 </script>
 </body>
 </html>
