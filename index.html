@@ -486,10 +486,11 @@ img{display:block; max-width:none}
 #fin{position:fixed; inset:0; z-index:30; display:grid; place-items:center; pointer-events:none;
   opacity:0; transition:opacity .8s var(--ease); background:radial-gradient(60% 50% at 50% 46%,rgba(7,4,2,.28),rgba(7,4,2,.82))}
 #fin.show{opacity:1; pointer-events:auto}
-#fin .in{text-align:center; max-width:72ch; padding:2.6rem 3.2rem;
+#fin .in{text-align:center; width:min(880px,92vw); max-height:calc(100vh - 150px); overflow:auto;
+  padding:2.4rem clamp(1.4rem,3.5vw,3.2rem);
   background:rgba(12,7,4,.6); backdrop-filter:blur(10px) saturate(120%);
   border:1px solid rgba(214,178,106,.28); box-shadow:0 40px 100px rgba(0,0,0,.6)}
-#fin h1{font-size:clamp(2.2rem,5.4vw,4.6rem); font-weight:400; line-height:1.08}
+#fin h1{font-size:clamp(1.7rem,4vw,3.7rem); font-weight:600; line-height:1.12; text-wrap:balance}
 #fin p{color:var(--ink2); margin:1.1rem 0 1.6rem; font-size:1.05rem}
 #fin .sig{display:flex; gap:2rem; justify-content:center; flex-wrap:wrap; margin-top:1.8rem;
   font-family:var(--fm); font-size:.58rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ink3)}
