@@ -483,9 +483,12 @@ img{display:block; max-width:none}
   box-shadow:0 6px 14px rgba(0,0,0,.55)}
 
 /* ---------- финал (оверлей) ---------- */
+/* прозрачность ведётся из JS-цикла: CSS-переход застревает, если вкладка была в фоне */
 #fin{position:fixed; inset:0; z-index:30; display:grid; place-items:center; pointer-events:none;
-  opacity:0; transition:opacity .8s var(--ease); background:radial-gradient(60% 50% at 50% 46%,rgba(7,4,2,.28),rgba(7,4,2,.82))}
-#fin.show{opacity:1; pointer-events:auto}
+  opacity:0; background:radial-gradient(60% 50% at 50% 46%,rgba(7,4,2,.28),rgba(7,4,2,.82))}
+#fin.show{pointer-events:auto}
+/* снимок застрявших переходов при возврате на вкладку */
+.nofx *,.nofx *:before,.nofx *:after{transition:none!important; animation:none!important}
 #fin .in{text-align:center; width:min(880px,92vw); max-height:calc(100vh - 150px); overflow:auto;
   padding:2.4rem clamp(1.4rem,3.5vw,3.2rem);
   background:rgba(10,6,3,.93);
@@ -530,7 +533,7 @@ img{display:block; max-width:none}
     </section>
 
     <!-- print рядом с титулом -->
-    <figure class="obj print" id="o-p1" data-stop="0" style="left:1820px;top:170px;width:400px;--r:2deg">
+    <figure class="obj print" id="o-p1" data-stop="0" data-frame="skip" style="left:1820px;top:170px;width:400px;--r:2deg">
       <span class="clip" style="--cr:-4deg"></span>
       <div class="win" style="height:520px">
         <img src="img/site-01.jpg" alt=""><img class="duo" src="img/site-01.jpg" alt="" aria-hidden="true">
@@ -829,7 +832,7 @@ PALS.forEach(function(p,i){
 
 /* ================= КАМЕРА ================= */
 var STOPS=[
- {x:1000,y:520, s:.81, n:"Титул"},
+ {x:1000,y:520, s:.81, n:"Титул", mx:.92},
  {x:2470,y:640, s:1.02,n:"Диагноз"},
  {x:3446,y:740, s:.62, n:"Архив"},
  {x:4940,y:675, s:.68, n:"Стиль"},
@@ -859,19 +862,33 @@ function render(){
   vp.style.left=clamp((cam.x-vw/cam.s/2)/W*mw,0,mw)+"px";
   vp.style.top=clamp((cam.y-vh/cam.s/2)/H*mh,0,mh)+"px";
 }
-var lastT=performance.now();
+var lastT=performance.now(), finA=0;
 function tick(now){
-  var dt=Math.min(.25,(now-lastT)/1000); lastT=now;
+  var dt=clamp((now-lastT)/1000,0,.25); lastT=now;   /* нулевой пол: отрицательный dt разгонял камеру */
   var k=reduce?1:1-Math.exp(-dt*5.2);
   cam.x=lerp(cam.x,tgt.x,k); cam.y=lerp(cam.y,tgt.y,k); cam.s=lerp(cam.s,tgt.s,k*.92);
+  var want=(cur===STOPS.length-1)?1:0;
+  if(finA!==want){
+    finA=lerp(finA,want,k*1.1);
+    if(Math.abs(finA-want)<.012)finA=want;
+    $("#fin").style.opacity=finA;
+  }
   render();
 }
+/* вкладка снова на виду — досчитываем всё, что зависло в фоне */
+addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible")return;
+  var h=document.documentElement; h.classList.add("nofx");
+  lastT=performance.now();
+  setTimeout(function(){h.classList.remove("nofx")},60);
+});
 (function loop(now){ tick(now); requestAnimationFrame(loop) })(performance.now());
 setInterval(function(){                     /* страховка: rAF заморожен в фоновом окне */
   var now=performance.now();
   if(now-lastT>120) tick(now);
 },150);
-window.snap=function(){cam.x=tgt.x;cam.y=tgt.y;cam.s=tgt.s;render()};
+window.snap=function(n){if(n!=null)goTo(n);cam.x=tgt.x;cam.y=tgt.y;cam.s=tgt.s;
+  finA=(cur===STOPS.length-1)?1:0; $("#fin").style.opacity=finA; render()};
 
 function syncUI(){
   $$(".tick").forEach(function(t,i){t.classList.toggle("on",i===cur)});
@@ -885,6 +902,8 @@ var CHR={top:76,bot:110,side:56};
 function frameFor(n){
   var st=STOPS[n];
   var objs=$$('.obj[data-stop="'+n+'"]');
+  var main=objs.filter(function(e){return e.dataset.frame!=="skip"});
+  if(main.length)objs=main;                       /* декор кадром не правит — только выглядывает */
   var l=1e9,t=1e9,r=-1e9,b=-1e9,PAD=44;
   if(objs.length){
     objs.forEach(function(e){l=Math.min(l,e.offsetLeft);t=Math.min(t,e.offsetTop);
@@ -892,7 +911,7 @@ function frameFor(n){
     l-=PAD;t-=PAD;r+=PAD;b+=PAD;
   } else if(n===STOPS.length-1){ l=140;t=140;r=W-140;b=H-140 }
   else return st;
-  var s=clamp(Math.min((innerWidth-CHR.side*2)/(r-l),(innerHeight-CHR.top-CHR.bot)/(b-t)),.13,1.06);
+  var s=clamp(Math.min((innerWidth-CHR.side*2)/(r-l),(innerHeight-CHR.top-CHR.bot)/(b-t)),.13,st.mx||1.06);
   return {x:(l+r)/2, y:(t+b)/2+(CHR.bot-CHR.top)/2/s, s:s};
 }
 function goTo(n){
