@@ -1,0 +1,1546 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>РУСФИНАНС — стол проекта · NORVALDA</title>
+<style>
+/* ============================================================
+   СТОЛ ПРОЕКТА · один мир, кинокамера · v7
+   ============================================================ */
+:root{
+  /* база — фирменный тёмно-синий из презентации клиента */
+  --bg:#0C1120;
+  --ink:#F5F6F8; --ink2:#9FA9C0; --ink3:#5F6B87;
+  --line:#232C45; --glass:rgba(12,17,32,.74);
+  --acc:#FFD21F; --acc2:#FFE45C; --soft:rgba(255,210,31,.13);
+  --onAcc:#161305;
+  --gold:linear-gradient(100deg,var(--acc) 0%,var(--acc2) 50%,var(--acc) 100%);
+  /* «бумага» теперь — синяя панель в стиле их деки; имена сохранены */
+  --paper:#18213A; --paper2:#131B31; --pink:#F5F6F8; --pink2:#9FA9C0; --pink3:#5F6B87;
+  --pline:#26314F; --pgold:var(--acc);
+  --fd:"Bahnschrift","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  --fm:"Segoe UI",system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.9,.24,1);
+  --hud:60px; --tl:70px;
+}
+*{box-sizing:border-box; margin:0}
+html,body{height:100%}
+body{background:#0B0705; color:var(--ink); overflow:hidden;
+  font-family:var(--fd); font-size:16px; -webkit-font-smoothing:antialiased}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+img{display:block; max-width:none}
+::selection{background:var(--acc); color:var(--onAcc)}
+:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+
+/* ================= СЦЕНА И МИР ================= */
+#stage{position:fixed; inset:0; overflow:hidden; cursor:grab;
+  background:radial-gradient(130% 110% at 50% -10%,#131C33 0%,#0B1020 55%,#070B16 100%)}
+#stage.drag{cursor:grabbing}
+#world{position:absolute; left:0; top:0; width:8800px; height:2880px;
+  transform-origin:0 0; will-change:transform;
+  background:
+    radial-gradient(46% 40% at 20% 16%,rgba(255,210,31,.05),transparent 70%),
+    radial-gradient(42% 46% at 78% 80%,rgba(255,160,70,.05),transparent 70%),
+    radial-gradient(1.4px 1.4px at 50% 50%,rgba(200,215,255,.06) 1px,transparent 1.4px),
+    linear-gradient(165deg,#141D36 0%,#101731 50%,#0B1020 100%)}
+#world{background-size:auto,auto,44px 44px,auto}
+#world:before{content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(72% 62% at 50% 44%,transparent 42%,rgba(0,0,0,.5) 100%)}
+.edge,.screw,#o-ruler,#o-compass,.penc{display:none}
+
+/* тёплая лампа за курсором — уют без ретро */
+#lamp{position:fixed; left:0; top:0; width:1500px; height:1500px; margin:-750px 0 0 -750px;
+  pointer-events:none; z-index:5; mix-blend-mode:screen; opacity:.9;
+  background:radial-gradient(closest-side,rgba(255,196,90,.075),rgba(255,180,80,.028) 45%,transparent 70%)}
+
+/* призрачные номера остановок на стене */
+.gnum{position:absolute; font-family:var(--fd); font-weight:700; font-size:560px; line-height:1;
+  color:transparent; -webkit-text-stroke:1.5px rgba(255,255,255,.045); pointer-events:none; user-select:none}
+
+/* ================= ОБЪЕКТЫ НА СТОЛЕ ================= */
+.obj{position:absolute; transform:rotate(var(--r,0deg)); transform-origin:50% 50%}
+.paper{background:linear-gradient(172deg,var(--paper) 0%,var(--paper2) 100%);
+  color:var(--pink); border:1px solid rgba(255,255,255,.07); border-radius:20px;
+  box-shadow:0 44px 90px -28px rgba(0,0,0,.8),0 8px 22px rgba(0,0,0,.4)}
+.paper .pk{font-family:var(--fm); font-size:.6rem; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:var(--pgold)}
+.paper h1,.paper h2{font-family:var(--fd); font-weight:700; line-height:1.02; letter-spacing:.01em; text-transform:uppercase}
+.paper .pl{color:var(--pink2)}
+.pt-num{font-variant-numeric:tabular-nums}
+/* фирменный разделитель клиента: линия — ромб — линия */
+.rd{display:flex; align-items:center; gap:.7rem; margin:.9rem 0 1rem; color:var(--pline)}
+.rd:before,.rd:after{content:""; flex:1; height:1px; background:currentColor}
+.rd i{width:7px; height:7px; background:var(--acc); transform:rotate(45deg); flex:none}
+
+/* фотокарточка — современная, фото в цвете */
+.print{background:var(--paper2); padding:10px 10px 38px; border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  box-shadow:0 36px 76px -24px rgba(0,0,0,.85),0 6px 16px rgba(0,0,0,.4)}
+.print:not(.obj){position:relative}   /* .obj задаёт absolute — не перебивать */
+.print .win{position:relative; overflow:hidden; background:#0B0F1C; border-radius:9px}
+.print .win img{width:100%; height:100%; object-fit:cover; transition:transform .6s var(--ease)}
+.print:hover .win>img:first-child{transform:scale(1.045)}
+.print .win .duo{display:none!important}
+.print figcaption{position:absolute; left:14px; right:14px; bottom:10px;
+  font-family:var(--fm); font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--pink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.print .clip{display:none}
+
+/* кнопка в духе референса: жёлтый прямоугольник, капс */
+.brass{font-family:var(--fd); font-size:.72rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--onAcc); background:var(--acc);
+  padding:.75rem 1.35rem; border-radius:4px;
+  box-shadow:0 10px 26px -8px var(--soft); transition:.25s}
+.brass:hover{background:var(--acc2); transform:translateY(-1px)}
+.brass.ghost{background:transparent; color:var(--pink2); box-shadow:none;
+  border:1px solid var(--pline); font-weight:600}
+.brass.ghost:hover{color:var(--pink); border-color:var(--pink3); transform:none}
+.brass.dark{color:var(--acc); background:none; border:1px solid var(--acc); box-shadow:none}
+
+/* ================= HUD ================= */
+.hud{position:fixed; left:0; right:0; top:0; height:var(--hud); z-index:40;
+  display:flex; align-items:center; gap:1.3rem; padding:0 1.5rem;
+  background:linear-gradient(180deg,rgba(7,4,2,.72),transparent)}
+.hud .brand{font-family:var(--fm); font-size:.64rem; letter-spacing:.26em; color:var(--ink3); white-space:nowrap}
+.hud .brand b{color:var(--ink); font-weight:600}
+.hud .rule{flex:1; height:1px; background:rgba(214,178,106,.18)}
+.hud .sname{font-family:var(--fm); font-size:.64rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ink3); white-space:nowrap}
+.hud .sname b{color:var(--acc); font-weight:400}
+.dock{display:flex; gap:.45rem; align-items:center}
+.sw{width:1.3rem; height:1.3rem; border:1px solid var(--line); border-radius:50%; padding:0; transition:transform .2s}
+.sw:hover{transform:scale(1.15)}
+.sw[aria-pressed="true"]{outline:2px solid var(--acc); outline-offset:2px}
+.play{font-family:var(--fm); font-size:.6rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink3); border:1px solid var(--line); padding:.4rem .8rem}
+.play:hover{color:var(--ink)}
+.play[aria-pressed="true"]{color:var(--onAcc); background:var(--acc); border-color:var(--acc)}
+
+/* ================= НИЖНЯЯ НАВИГАЦИЯ ================= */
+.tline{position:fixed; left:0; right:0; bottom:0; height:var(--tl); z-index:40;
+  display:flex; align-items:center; justify-content:center; gap:.4rem;
+  background:linear-gradient(0deg,rgba(7,4,2,.8),transparent)}
+.tick{position:relative; display:grid; gap:.28rem; justify-items:center; padding:.35rem .3rem; color:var(--ink3)}
+.tick i{display:block; width:22px; height:2px; background:var(--line); transition:.3s}
+.tick span{font-family:var(--fm); font-size:.53rem; letter-spacing:.1em}
+.tick:hover{color:var(--ink2)}
+.tick.on{color:var(--acc)}
+.tick.on i{background:var(--acc); width:34px}
+.tick .lbl{position:absolute; top:-1rem; left:50%; transform:translateX(-50%); font-family:var(--fm);
+  font-size:.56rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2);
+  opacity:0; transition:.25s; pointer-events:none; white-space:nowrap}
+.tick:hover .lbl,.tick.on .lbl{opacity:1}
+.nav{position:fixed; z-index:40; bottom:calc(var(--tl)/2); transform:translateY(50%);
+  width:2.5rem; height:2.5rem; border:1px solid var(--line); color:var(--ink2);
+  display:grid; place-items:center; font-size:1.05rem; transition:.25s; background:var(--glass)}
+.nav:hover{color:var(--onAcc); background:var(--acc); border-color:var(--acc)}
+.nav.prev{left:1.1rem}.nav.next{right:1.1rem}
+.hint{position:fixed; left:1.2rem; bottom:calc(var(--tl) + .5rem); z-index:39;
+  font-family:var(--fm); font-size:.55rem; letter-spacing:.14em; color:var(--ink3)}
+
+/* ================= МИНИКАРТА ================= */
+#mm{position:fixed; right:1.2rem; bottom:calc(var(--tl) + .8rem); z-index:41;
+  width:192px; height:86px; border:1px solid rgba(255,255,255,.16); border-radius:10px;
+  background:rgba(10,14,28,.82); backdrop-filter:blur(6px); cursor:pointer;
+  box-shadow:0 10px 30px rgba(0,0,0,.6); overflow:hidden}
+#mm .dot{position:absolute; width:5px; height:5px; margin:-2.5px; border-radius:50%; background:var(--ink3)}
+#mm .dot.on{background:var(--acc); box-shadow:0 0 8px var(--acc)}
+#mm .vp{position:absolute; border:1px solid var(--acc); background:var(--soft); pointer-events:none}
+#mm .cap{position:absolute; left:6px; top:4px; font-family:var(--fm); font-size:.5rem;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink3)}
+@media (max-width:900px){#mm{display:none}}
+
+/* ================= КУРСОР ================= */
+.cur{position:fixed; left:0; top:0; z-index:80; pointer-events:none; opacity:0; transition:opacity .3s}
+.cur.on{opacity:1}
+.cur:before{content:""; position:absolute; left:-2px; top:-2px; width:4px; height:4px; border-radius:50%; background:var(--acc)}
+.cur .ring{position:absolute; left:50%; top:50%; width:36px; height:36px; margin:-18px 0 0 -18px;
+  border:1px solid var(--acc); border-radius:50%; opacity:.5; transform:scale(.35);
+  transition:transform .3s var(--ease),opacity .3s}
+.cur.big .ring{transform:scale(1); opacity:.95}
+@media (pointer:coarse){.cur{display:none}}
+
+/* ================= ЛУПА ================= */
+
+
+/* ================= ТИПОГРАФИКА ВНУТРИ БУМАГ ================= */
+.em{font-style:normal; color:var(--acc)}
+.mlab{font-family:var(--fm); font-size:.56rem; font-weight:600; letter-spacing:.24em; text-transform:uppercase; color:var(--pink3)}
+
+/* ---------- S0 титульная карта ---------- */
+#o-title{left:260px; top:230px; width:1480px; --r:0deg; padding:64px 72px 56px}
+#o-title h1{font-size:92px; margin:20px 0 8px}
+#o-title .sub{font-size:20px; line-height:1.62; color:var(--pink2); max-width:46ch; font-family:var(--fm)}
+#o-title .keys{display:flex; gap:1.5rem; margin-top:32px; flex-wrap:wrap}
+#o-title .keys span{font-family:var(--fm); font-size:.6rem; letter-spacing:.16em; color:var(--pink3); text-transform:uppercase}
+#o-title .keys b{border:1px solid var(--pline); border-radius:4px; padding:.14rem .45rem; margin-right:.35rem; font-weight:600; color:var(--pink2)}
+#o-title .chips{display:flex; gap:.6rem; margin-top:26px; flex-wrap:wrap}
+#o-title .chips i{font-style:normal; font-family:var(--fm); font-size:.62rem; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--pink2); border:1px solid var(--pline); border-radius:100px; padding:.5rem 1rem}
+#o-title .chips i b{color:var(--acc); font-weight:700; margin-right:.3rem}
+.seal{position:absolute; right:56px; top:52px; font-family:var(--fd); font-weight:700; font-size:.72rem;
+  letter-spacing:.26em; text-transform:uppercase; color:var(--pink3)}
+.seal b{color:var(--pink)}
+.seal:after{content:""; display:block; height:3px; margin-top:.45rem; background:var(--acc); border-radius:2px}
+.seal i,.seal:before{display:none}
+
+/* ---------- S1 карточка-диагноз ---------- */
+#o-ledger{left:2190px; top:270px; width:560px; --r:1.2deg; padding:40px 44px}
+#o-ledger .row{display:grid; grid-template-columns:auto 1fr; gap:1.1rem; align-items:baseline;
+  padding:.85rem 0; border-bottom:1px solid var(--pline)}
+#o-ledger .row:last-of-type{border-bottom:0}
+#o-ledger .row b{font-size:44px; color:var(--pgold); min-width:150px; text-align:right; font-weight:400}
+#o-ledger .row span{color:var(--pink2); font-size:15px; line-height:1.45}
+#o-ledger h2{font-size:34px; margin:.4rem 0 1rem}
+
+/* ---------- S2 архив-россыпь ---------- */
+.heap{width:322px}
+.heap .win{height:225px}
+.heap:hover{z-index:60!important}
+.heap{transition:transform .45s var(--ease), box-shadow .45s}
+.heap:hover{transform:rotate(0deg) scale(1.05)!important; box-shadow:0 50px 90px -20px rgba(0,0,0,.9)}
+#o-empty{width:300px; height:225px; border:2px dashed rgba(214,178,106,.5); display:grid; place-items:center;
+  color:var(--ink3); background:rgba(0,0,0,.25)}
+#o-empty span{font-family:var(--fm); font-size:.62rem; letter-spacing:.3em; text-transform:uppercase; text-align:center; line-height:2}
+
+/* ---------- S3 стиль ---------- */
+.swatch{width:300px; padding:26px 28px 30px; cursor:pointer; transition:transform .3s var(--ease)}
+.swatch:hover{transform:rotate(0deg) translateY(-8px)!important}
+.swatch[aria-pressed="true"]{outline:2px solid var(--pgold); outline-offset:-8px}
+.swatch .chips{display:flex; height:46px; margin:.8rem 0}
+.swatch .chips i{flex:1}
+.swatch b{font-family:var(--fd); font-size:20px; font-weight:700; text-transform:uppercase; display:block}
+.swatch span{font-size:13.5px; color:var(--pink2); line-height:1.5; display:block; margin-top:.35rem}
+#o-ba{width:900px; padding:16px 16px 52px}
+#o-ba .cmp{position:relative; height:500px; overflow:hidden; user-select:none; touch-action:none; background:#0A0F1E; border-radius:12px}
+#o-ba .grade{filter:saturate(1.18) contrast(1.07) brightness(1.03)}
+#o-ba .mh{position:absolute; left:0; right:0; bottom:0; z-index:3; padding:44px 22px 20px;
+  background:linear-gradient(180deg,transparent, rgba(6,9,18,.88)); pointer-events:none}
+#o-ba .mh .mlab{display:block; font-family:var(--fm); font-size:.56rem; letter-spacing:.24em; text-transform:uppercase; margin-bottom:.4rem}
+#o-ba .mh b{display:block; font-family:var(--fd); font-weight:700; font-size:1.5rem; letter-spacing:.02em;
+  text-transform:uppercase; color:#fff; margin-bottom:.6rem}
+#o-ba .mh i{display:inline-block; font-style:normal; font-family:var(--fd); font-weight:700; font-size:.66rem;
+  letter-spacing:.1em; text-transform:uppercase; background:var(--acc); color:var(--onAcc); border-radius:999px; padding:.45rem .95rem}
+#o-ba .cmp img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none}
+#o-ba .after{position:absolute; inset:0; clip-path:inset(0 0 0 var(--cut,50%))}
+#o-ba .tag{position:absolute; top:14px; z-index:4; font-family:var(--fm); font-size:.56rem; letter-spacing:.2em;
+  text-transform:uppercase; color:#F6EFE1; background:rgba(20,12,6,.6); padding:.3rem .65rem; backdrop-filter:blur(3px)}
+#o-ba .tag.l{left:14px}
+#o-ba .tag.r{right:14px; color:var(--acc2)}
+#o-ba .split{position:absolute; top:0; bottom:0; left:var(--cut,50%); width:2px; background:var(--acc); z-index:5; cursor:ew-resize}
+#o-ba .split:after{content:"◂ ▸"; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:var(--acc); color:var(--onAcc); font-size:.66rem; padding:.32rem .5rem; white-space:nowrap}
+#o-ba figcaption{position:absolute; left:18px; bottom:14px; font-family:var(--fm); font-size:.62rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink3)}
+
+/* ---------- S4–S6 · ключевые экраны будущего сайта ---------- */
+.page{width:980px}
+.page .cap{font-family:var(--fm); font-size:.62rem; font-weight:600; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--acc); margin-bottom:10px; display:flex; gap:.8rem; align-items:center}
+.page .cap span{color:var(--pink3)}
+.page .frame{background:#0A0E1B; border:1px solid rgba(255,255,255,.09); border-radius:14px; overflow:hidden;
+  box-shadow:0 50px 110px -30px rgba(0,0,0,.9),0 10px 30px rgba(0,0,0,.5)}
+.page .bar{display:flex; align-items:center; gap:.5rem; padding:.55rem .8rem; background:#10162A; border-bottom:1px solid rgba(255,255,255,.07)}
+.page .bar i{width:9px; height:9px; border-radius:50%; background:#2A3350}
+.page .bar span{flex:1; max-width:340px; margin:0 auto; text-align:center; font-family:var(--fm); font-size:.6rem;
+  color:var(--ink3); background:#0B1020; border:1px solid rgba(255,255,255,.07); border-radius:100px; padding:.22rem .9rem}
+.pg{font-family:var(--fm); color:#EDF0F6; background:#0B0F1E}
+/* нумерованные пины на макете + карточки фишек под ним */
+.pin{position:absolute; z-index:6; width:30px; height:30px; border-radius:50%;
+  background:var(--acc); color:var(--onAcc); display:grid; place-items:center;
+  font-family:var(--fd); font-weight:700; font-size:.8rem;
+  box-shadow:0 0 0 5px var(--soft),0 10px 24px -6px rgba(0,0,0,.7)}
+.pin:after{content:""; position:absolute; inset:-9px; border-radius:50%; border:1px solid var(--acc); opacity:.4}
+.feats{display:flex; gap:12px; margin-top:14px}
+.feat{flex:1; background:linear-gradient(172deg,var(--paper) 0%,var(--paper2) 100%);
+  border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.85rem 1rem;
+  box-shadow:0 24px 55px -22px rgba(0,0,0,.8)}
+.feat b{display:flex; gap:.5rem; align-items:center; font-family:var(--fd); font-size:.74rem; font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--pink); margin-bottom:.35rem}
+.feat b i{font-style:normal; width:20px; height:20px; border-radius:50%; background:var(--acc); color:var(--onAcc);
+  display:grid; place-items:center; font-size:.66rem; flex:none}
+.feat p{font-family:var(--fm); font-size:.7rem; line-height:1.5; color:var(--pink2)}
+/* внутренности макетов страниц */
+.pg .pnav{display:flex; align-items:center; gap:1.1rem; padding:.8rem 1.2rem; font-size:.6rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:#8E97B5; border-bottom:1px solid rgba(255,255,255,.06)}
+.pg .pnav b{font-family:var(--fd); color:#fff; letter-spacing:.22em; font-size:.72rem}
+.pg .pnav .sp{flex:1}
+.pg .pnav .tel{color:#fff}
+.pg .cta{font-family:var(--fd); font-weight:700; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  background:var(--acc); color:var(--onAcc); padding:.5rem .95rem; border-radius:4px; display:inline-block}
+.pg .gbtn{font-family:var(--fd); font-weight:700; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.4); color:#fff; padding:.5rem .95rem; border-radius:4px; display:inline-block}
+.pg .hero{position:relative; height:290px; display:grid; align-content:end; gap:.5rem; padding:1.1rem 1.3rem}
+.pg .hero>img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.pg .hero .ov{position:absolute; inset:0; background:linear-gradient(180deg,rgba(6,9,18,.25),rgba(6,9,18,.85) 90%)}
+.pg .hero>*:not(img):not(.ov){position:relative}
+.pg h1{font-family:var(--fd); font-weight:700; text-transform:uppercase; font-size:1.65rem; line-height:1.04; max-width:62%}
+.pg .sub{font-size:.7rem; color:#C7CDDF; max-width:48ch; line-height:1.55}
+.pg .btns{display:flex; gap:.6rem; margin-top:.3rem}
+.pg .strip{display:grid; grid-template-columns:repeat(4,1fr); background:#0D1326}
+.pg .strip div{padding:.65rem .9rem; font-size:.54rem; letter-spacing:.08em; text-transform:uppercase;
+  color:#8E97B5; border-left:1px solid rgba(255,255,255,.05)}
+.pg .strip b{display:block; font-family:var(--fd); font-size:.95rem; color:var(--acc)}
+.pg .sect{padding:1rem 1.2rem 1.2rem}
+.pg .sh{font-size:.54rem; font-weight:600; letter-spacing:.26em; text-transform:uppercase; color:#8E97B5; margin-bottom:.7rem}
+.pg .tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem}
+.pg .tile{position:relative; aspect-ratio:16/10; border-radius:8px; overflow:hidden}
+.pg .tile img{width:100%; height:100%; object-fit:cover}
+.pg .tile:after{content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(6,9,18,.6),transparent 55%)}
+.pg .tile span{position:absolute; left:.6rem; bottom:.5rem; z-index:2; font-family:var(--fd); font-weight:700;
+  font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:#fff}
+/* конфигуратор */
+.pg .conf{display:grid; grid-template-columns:240px 1fr 235px; min-height:500px}
+.pg .cpanel{padding:1rem; border-right:1px solid rgba(255,255,255,.06); display:grid; gap:.85rem; align-content:start}
+.pg .cres{padding:1rem; border-left:1px solid rgba(255,255,255,.06); display:grid; gap:.6rem; align-content:start}
+.pg .lab{font-size:.52rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:#8E97B5}
+.pg .chips2 .chip{display:inline-block; font-size:.58rem; letter-spacing:.06em; padding:.42rem .66rem;
+  border:1px solid rgba(255,255,255,.14); border-radius:100px; color:#C7CDDF; margin:.14rem .18rem .14rem 0}
+.pg .chip.on{background:var(--acc); border-color:var(--acc); color:var(--onAcc); font-weight:700}
+.pg .fr{height:2px; background:#26314F; position:relative; border-radius:2px; margin:.65rem 2px}
+.pg .fr i{position:absolute; top:50%; width:12px; height:12px; border-radius:50%; background:var(--acc);
+  transform:translate(-50%,-50%); box-shadow:0 0 0 4px var(--soft)}
+.pg .ciso{display:grid; place-items:center; padding:.6rem}
+.pg .cres .row{display:flex; justify-content:space-between; align-items:baseline; font-size:.62rem; color:#8E97B5;
+  border-bottom:1px dashed rgba(255,255,255,.12); padding:.42rem 0}
+.pg .cres .row b{font-family:var(--fd); color:#fff; font-size:.85rem}
+#pgIso .dr{fill:none; stroke:#8E9AB8; stroke-width:1.2; vector-effect:non-scaling-stroke; stroke-linecap:round}
+#pgIso .dr.acc{stroke:var(--acc); stroke-width:1.6}
+#pgIso .dr.thin{stroke:#39456A; stroke-width:1}
+#pgIso .dr.dim{stroke:#5F6B87; stroke-width:1}
+#pgIso .ff{fill:#fff; opacity:.03}
+#pgIso .fa{fill:var(--acc); opacity:.85}
+#pgIso text{font-family:var(--fm); fill:#5F6B87; letter-spacing:.14em; text-transform:uppercase}
+/* кейс */
+.pg .case2{display:grid; grid-template-columns:1.05fr .95fr; gap:1rem; padding:1.1rem 1.2rem}
+.pg .ba2{position:relative; border-radius:10px; overflow:hidden; aspect-ratio:4/3}
+.pg .ba2 img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.pg .ba2 .half{position:absolute; inset:0; clip-path:inset(0 0 0 52%)}
+.pg .ba2 .mid{position:absolute; top:0; bottom:0; left:52%; width:2px; background:var(--acc); z-index:3}
+.pg .ba2 .bt{position:absolute; z-index:4; top:.6rem; font-size:.5rem; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:#fff; background:rgba(6,9,18,.65); padding:.24rem .55rem; border-radius:4px}
+.pg .kv{display:grid; gap:.5rem; align-content:start}
+.pg .kv h2{font-family:var(--fd); font-weight:700; text-transform:uppercase; font-size:1.25rem; line-height:1.06}
+.pg .kv .row{display:flex; gap:.5rem; flex-wrap:wrap}
+.pg .kv .row i{font-style:normal; font-size:.56rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  color:#C7CDDF; border:1px solid rgba(255,255,255,.16); border-radius:100px; padding:.35rem .7rem}
+.pg .kv p{font-size:.7rem; color:#C7CDDF; line-height:1.6}
+.pg .tl2{padding:0 1.2rem 1.2rem}
+.pg .tlbar{position:relative; height:36px; background:#0D1326; border:1px solid rgba(255,255,255,.08);
+  border-radius:8px; display:flex; overflow:hidden}
+.pg .tlbar i{flex-grow:var(--g,1); border-right:1px solid rgba(255,255,255,.06); display:grid; place-items:center;
+  font-size:.48rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#8E97B5; font-style:normal; white-space:nowrap}
+.pg .tlbar i.on{background:var(--soft); color:var(--acc)}
+.pg .knob{position:absolute; left:64%; top:50%; width:16px; height:16px; border-radius:50%; background:var(--acc);
+  transform:translate(-50%,-50%); box-shadow:0 0 0 5px var(--soft); z-index:3}
+/* ---------- S5 коллекция ---------- */
+#o-coll{left:4950px; top:1560px; width:1240px; --r:-.7deg; padding:44px 48px}
+#o-coll .grid{display:grid; grid-template-columns:250px 1fr 300px; gap:2rem; margin-top:1.4rem; align-items:center}
+#o-coll .ty{display:grid; grid-template-columns:1.5rem 1fr; gap:.6rem; align-items:baseline; text-align:left;
+  padding:.55rem .3rem; border-bottom:1px solid var(--pline); transition:.2s}
+#o-coll .ty:last-child{border-bottom:0}
+#o-coll .ty em{font-family:var(--fm); font-style:normal; font-size:.56rem; letter-spacing:.14em; color:var(--pink3)}
+#o-coll .ty b{font-family:var(--fd); font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.03em}
+#o-coll .ty span{grid-column:2; font-family:var(--fm); font-size:.52rem; letter-spacing:.18em; color:var(--pink3); text-transform:uppercase}
+#o-coll .ty:hover{background:rgba(138,106,52,.07)}
+#o-coll .ty[aria-pressed="true"]{background:rgba(138,106,52,.12)}
+#o-coll .ty[aria-pressed="true"] em{color:var(--pgold)}
+#o-coll svg{width:100%; height:430px; overflow:visible}
+#o-coll svg .dr{fill:none; stroke:#8E9AB8; stroke-width:1.2; vector-effect:non-scaling-stroke; stroke-linecap:round}
+#o-coll svg .dr.acc{stroke:var(--acc); stroke-width:1.6}
+#o-coll svg .dr.thin{stroke:#39456A; stroke-width:1}
+#o-coll svg .dr.dim{stroke:#5F6B87; stroke-width:1}
+#o-coll svg .ff{fill:#FFFFFF; opacity:.03}
+#o-coll svg .fa{fill:var(--acc); opacity:.85}
+#o-coll svg text{font-family:var(--fm); fill:var(--pink3); letter-spacing:.14em; text-transform:uppercase}
+#o-coll .side .print{--r:1.6deg; transform:rotate(var(--r)); width:100%}
+#o-coll .side .win{height:200px}
+#o-coll .side h3{font-family:var(--fd); font-size:24px; font-weight:700; text-transform:uppercase; margin:1rem 0 .3rem}
+#o-coll .side p{color:var(--pink2); font-size:14.5px; line-height:1.55}
+#o-coll dl{display:grid; grid-template-columns:auto 1fr; gap:.35rem 1rem; margin-top:.9rem;
+  border-top:1px solid var(--pline); padding-top:.8rem}
+#o-coll dt{font-family:var(--fm); font-size:.53rem; letter-spacing:.2em; text-transform:uppercase; color:var(--pink3); padding-top:.2rem}
+#o-coll dd{font-size:16px}
+#o-coll .ctr{display:flex; gap:1.4rem; margin-top:.9rem; align-items:center; flex-wrap:wrap}
+#o-coll .ctr label{display:flex; gap:.6rem; align-items:center; font-family:var(--fm); font-size:.56rem;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--pink3)}
+#o-coll .ctr b{font-size:17px; color:var(--pgold); font-weight:400; font-family:var(--fd)}
+#o-coll input[type=range]{appearance:none; width:130px; height:2px; background:var(--pline)}
+#o-coll input[type=range]::-webkit-slider-thumb{appearance:none; width:13px; height:13px; border-radius:50%; background:var(--pgold)}
+#o-coll input[type=range]::-moz-range-thumb{width:13px; height:13px; border:0; border-radius:50%; background:var(--pgold)}
+
+/* ---------- S6 стройка ---------- */
+#o-build{left:3400px; top:1620px; width:1500px; --r:.6deg; padding:40px 46px 34px}
+#o-build .top{display:flex; justify-content:space-between; align-items:flex-end; gap:2rem}
+#o-build h2{font-size:36px}
+#o-build .day b{font-size:74px; color:var(--pgold); font-weight:400; line-height:.9}
+#o-build .day span{display:block; font-family:var(--fm); font-size:.54rem; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--pink3); text-align:right}
+#o-build svg{width:100%; height:330px; display:block; margin-top:8px}
+#o-build svg .dr{fill:none; stroke:#8E9AB8; stroke-width:1.4; vector-effect:non-scaling-stroke; stroke-linecap:round}
+#o-build svg .dr.acc{stroke:var(--acc)}
+#o-build svg .dr.thin{stroke:#39456A; stroke-width:1}
+#o-build svg text{font-family:var(--fm); fill:var(--pink3); letter-spacing:.16em; text-transform:uppercase}
+#o-build .phases{display:flex; gap:4px; margin-top:6px}
+#o-build .phz{flex-basis:0; background:rgba(255,255,255,.05); border-radius:4px; font-family:var(--fm); font-size:.52rem;
+  font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--pink3); padding:.45rem .3rem; text-align:center;
+  white-space:nowrap; overflow:hidden; transition:.25s}
+#o-build .phz.done{background:rgba(255,210,31,.14); color:var(--pink2)}
+#o-build .phz.on{background:var(--acc); color:var(--onAcc)}
+#o-build .srow{display:flex; gap:1.1rem; align-items:center; margin-top:12px}
+#o-build input[type=range]{appearance:none; flex:1; height:2px; background:var(--pline)}
+#o-build input[type=range]::-webkit-slider-thumb{appearance:none; width:15px; height:15px; border-radius:50%; background:var(--pgold)}
+#o-build input[type=range]::-moz-range-thumb{width:15px; height:15px; border:0; border-radius:50%; background:var(--pgold)}
+#o-build .note{margin-top:8px; color:var(--pink2); font-size:15px; min-height:1.5em; font-family:var(--fm)}
+#o-build .stamp{position:absolute; right:70px; top:120px; transform:rotate(-9deg) scale(2); opacity:0;
+  border:3px solid var(--acc); color:var(--acc); border-radius:6px; font-size:26px; letter-spacing:.2em; text-transform:uppercase;
+  padding:.4rem 1.2rem; transition:.35s var(--ease); pointer-events:none; font-family:var(--fd); font-weight:700}
+#o-build .stamp.show{opacity:.92; transform:rotate(-9deg) scale(1)}
+#o-build .ev{position:absolute; right:-70px; bottom:-60px; display:flex; gap:1rem; pointer-events:none}
+#o-build .ev.show{pointer-events:auto}
+#o-build .ev .print{width:230px; --r:3deg; transform:rotate(var(--r)); opacity:0; translate:0 20px; transition:.6s var(--ease)}
+#o-build .ev .print:first-child{--r:-2.4deg}
+#o-build .ev.show .print{opacity:1; translate:0 0}
+#o-build .ev .win{height:150px}
+
+/* ---------- S7 планировка ---------- */
+#o-plan{left:1980px; top:1430px; width:1200px; --r:-.9deg; padding:20px 20px 56px}
+#o-plan .win{position:relative; overflow:hidden; background:#151009; height:700px}
+#o-plan .win>img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+#o-plan .win .duo{display:none}
+#o-plan .zone{position:absolute; transform:translate(-50%,-50%); z-index:3; cursor:pointer}
+#o-plan .zone i{display:block; width:34px; height:34px; border-radius:50%; border:1px solid var(--acc);
+  box-shadow:0 0 16px var(--soft), inset 0 0 12px var(--soft); transition:.25s}
+#o-plan .zone:after{content:""; position:absolute; left:50%; top:50%; width:5px; height:5px;
+  transform:translate(-50%,-50%); border-radius:50%; background:var(--acc)}
+#o-plan .zone b{position:absolute; left:50%; top:calc(100% + .25rem); transform:translateX(-50%);
+  font-family:var(--fm); font-weight:600; font-size:.54rem; letter-spacing:.22em; text-transform:uppercase;
+  color:#fff; background:rgba(8,12,24,.78); border-radius:4px; padding:.22rem .6rem; white-space:nowrap; backdrop-filter:blur(3px)}
+#o-plan .zone[aria-pressed="true"] i{border-color:var(--acc2); box-shadow:0 0 26px var(--acc)}
+#o-plan figcaption{position:absolute; left:24px; bottom:16px; font-family:var(--fm); font-size:.62rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink3)}
+#o-plan .thumbs{position:absolute; right:20px; bottom:10px; display:flex; gap:.5rem}
+#o-plan .thumbs button{width:74px; height:48px; padding:0; border:1px solid var(--pline); overflow:hidden; opacity:.55; transition:.25s}
+#o-plan .thumbs button img{width:100%; height:100%; object-fit:cover}
+#o-plan .thumbs button:hover{opacity:.85}
+#o-plan .thumbs button[aria-pressed="true"]{opacity:1; outline:2px solid var(--pgold)}
+#o-zoneCard{left:2540px; top:2310px; width:560px; --r:1.2deg; padding:30px 36px}
+#o-zoneCard .area{font-family:var(--fm); font-size:.56rem; letter-spacing:.24em; text-transform:uppercase; color:var(--pgold)}
+#o-zoneCard h3{font-family:var(--fd); font-size:28px; font-weight:700; text-transform:uppercase; margin:.35rem 0 .5rem}
+#o-zoneCard p{color:var(--pink2); font-size:15px; line-height:1.6; margin-bottom:.9rem}
+#o-zoneCard dl{display:grid; grid-template-columns:auto 1fr; gap:.35rem 1rem; border-top:1px solid var(--pline); padding-top:.8rem}
+#o-zoneCard dt{font-family:var(--fm); font-size:.53rem; letter-spacing:.2em; text-transform:uppercase; color:var(--pink3); padding-top:.2rem}
+#o-zoneCard dd{font-size:15.5px}
+#o-zoneCard .zchips{display:flex; gap:.4rem; flex-wrap:wrap; margin-top:1rem}
+#o-zoneCard .zc{font-family:var(--fm); font-size:.53rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--pink2); border:1px solid var(--pline); padding:.4rem .7rem; transition:.2s}
+#o-zoneCard .zc:hover{border-color:var(--pgold); color:var(--pink)}
+#o-zoneCard .zc[aria-pressed="true"]{background:var(--pgold); border-color:var(--pgold); color:var(--paper)}
+
+/* ---------- S8 два входа ---------- */
+.folder{width:560px; padding:10px 10px 58px}
+.folder .win{height:410px; position:relative; overflow:hidden}
+.folder .win img{width:100%; height:100%; object-fit:cover; transition:transform .6s var(--ease)}
+.folder:hover .win img{transform:scale(1.05)}
+.folder .win:after{content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(6,9,18,.82) 6%,rgba(6,9,18,.15) 55%,rgba(6,9,18,.3))}
+.folder .ovl{position:absolute; left:32px; right:32px; bottom:74px; z-index:2; color:#fff}
+.folder .ovl .mlab{color:var(--acc)}
+.folder .ovl h3{font-family:var(--fd); font-size:30px; font-weight:700; text-transform:uppercase; line-height:1.05; margin:.45rem 0 .5rem}
+.folder .ovl p{font-family:var(--fm); font-size:14px; color:#C9D0E2; line-height:1.6; max-width:42ch}
+.folder .ovl .row{display:flex; gap:1rem; flex-wrap:wrap; margin-top:.65rem; font-family:var(--fm);
+  font-size:.54rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#8E9AB8}
+.folder figcaption{left:16px; bottom:14px}
+.folder .brass{position:absolute; right:14px; bottom:11px}
+
+/* ---------- S9 контракт ---------- */
+#o-contract{left:130px; top:1540px; width:680px; --r:.9deg; padding:42px 46px}
+#o-contract h2{font-size:34px; margin:.4rem 0 1.1rem}
+#o-contract .q{border-bottom:1px solid var(--pline)}
+#o-contract .q>button{width:100%; display:grid; grid-template-columns:2rem 1fr 1rem; gap:.7rem;
+  align-items:baseline; text-align:left; padding:.7rem .1rem}
+#o-contract .q .n{font-family:var(--fm); font-size:.56rem; color:var(--pgold); letter-spacing:.1em}
+#o-contract .q p{font-size:16.5px; line-height:1.4}
+#o-contract .q i{font-style:normal; color:var(--pink3); transition:transform .3s}
+#o-contract .q.open i{transform:rotate(45deg)}
+#o-contract .a{max-height:0; overflow:hidden; transition:max-height .4s var(--ease)}
+#o-contract .q.open .a{max-height:9rem}
+#o-contract .a div{padding:0 .1rem .8rem 2.7rem; font-size:14px; color:var(--pink2); font-family:var(--fm)}
+#o-contract .road{display:flex; gap:0; margin-top:1.3rem; border-top:1px solid var(--pline); padding-top:1rem}
+#o-contract .step{flex:1; text-align:center; position:relative; padding-top:.9rem}
+#o-contract .step:before{content:""; position:absolute; top:0; left:50%; width:7px; height:7px; margin-left:-3.5px;
+  border-radius:50%; background:var(--pline); transform:translateY(-50%)}
+#o-contract .step.now:before{background:var(--pgold); box-shadow:0 0 0 4px rgba(138,106,52,.25)}
+#o-contract .step b{display:block; font-family:var(--fd); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+#o-contract .step span{font-family:var(--fm); font-size:.5rem; letter-spacing:.14em; text-transform:uppercase; color:var(--pink3)}
+#o-contract .road{position:relative}
+#o-contract .road:before{content:""; position:absolute; top:0; left:10%; right:10%; height:1px; background:var(--pline)}
+
+/* ---------- декор ---------- */
+#o-ruler{left:2660px; top:70px; width:1200px; height:46px; color:rgba(214,178,106,.5)}
+#o-compass{left:3020px; top:1170px; width:190px; height:190px; color:rgba(214,178,106,.55)}
+.penc{position:absolute; height:10px; border-radius:5px;
+  background:linear-gradient(90deg,#2A1B10 0 6%,#C9A55B 6% 10%,#6E4F26 10% 92%,#E8D6A8 92% 96%,#3A2A16 96%);
+  box-shadow:0 6px 14px rgba(0,0,0,.55)}
+
+/* ---------- финал (оверлей) ---------- */
+#fin{position:fixed; inset:0; z-index:30; display:grid; place-items:center; pointer-events:none;
+  opacity:0; transition:opacity .8s var(--ease); background:radial-gradient(60% 50% at 50% 46%,rgba(7,4,2,.28),rgba(7,4,2,.82))}
+#fin.show{opacity:1; pointer-events:auto}
+#fin .in{text-align:center; max-width:72ch; padding:2.6rem 3.2rem;
+  background:rgba(12,7,4,.6); backdrop-filter:blur(10px) saturate(120%);
+  border:1px solid rgba(214,178,106,.28); box-shadow:0 40px 100px rgba(0,0,0,.6)}
+#fin h1{font-size:clamp(2.2rem,5.4vw,4.6rem); font-weight:400; line-height:1.08}
+#fin p{color:var(--ink2); margin:1.1rem 0 1.6rem; font-size:1.05rem}
+#fin .sig{display:flex; gap:2rem; justify-content:center; flex-wrap:wrap; margin-top:1.8rem;
+  font-family:var(--fm); font-size:.58rem; letter-spacing:.22em; text-transform:uppercase; color:var(--ink3)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important; transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="world">
+    <div class="edge"></div>
+    <i class="screw" style="left:44px;top:44px"></i><i class="screw" style="right:44px;top:44px"></i>
+    <i class="screw" style="left:44px;bottom:44px"></i><i class="screw" style="right:44px;bottom:44px"></i>
+
+    <!-- S0 · титульная карта -->
+    <section class="obj paper" id="o-title" data-stop="0">
+      <div class="seal">NORVALDA <b>× РУСФИНАНС</b></div>
+      <div class="pk">Концепция сайта · август 2026</div>
+      <h1>Сайт уровня<br>ваших <span class="em">зданий</span></h1>
+      <div class="rd" style="max-width:420px"><i></i></div>
+      <p class="sub">Вы собираете жилые корпуса за 45 дней. Мы собрали концепцию, которая продаёт это так же быстро, — целиком из ваших материалов.</p>
+      <div class="chips">
+        <i><b>45</b>дней до сдачи</i>
+        <i><b>ISO·TÜV</b>сертификация</i>
+        <i><b>РФ·ЕС</b>география</i>
+        <i><b>62</b>ваших кадра</i>
+      </div>
+      <div class="keys">
+        <span><b>◄ ►</b>дальше</span>
+        <span><b>drag</b>свободный полёт</span>
+        <span><b>P</b>автопоказ</span>
+        <span><b>2×клик</b>зум к предмету</span>
+      </div>
+    </section>
+
+    <!-- print рядом с титулом -->
+    <figure class="obj print" id="o-p1" data-stop="0" style="left:1820px;top:170px;width:400px;--r:2deg">
+      <span class="clip" style="--cr:-4deg"></span>
+      <div class="win" style="height:520px">
+        <img src="img/site-01.jpg" alt=""><img class="duo" src="img/site-01.jpg" alt="" aria-hidden="true">
+      </div>
+      <figcaption>монтаж корпуса · Швеция, день 38</figcaption>
+    </figure>
+
+    <!-- S1 · карточка-диагноз -->
+    <section class="obj paper" id="o-ledger" data-stop="1">
+      <div class="pk">диагноз · лист 01</div>
+      <h2>У вас есть здания.<br>У вас нет фасада.</h2>
+      <div class="row"><b class="pt-num" data-cnt="15">0</b><span>страниц PDF — вся витрина компании</span></div>
+      <div class="row"><b class="pt-num" data-cnt="62">0</b><span>файла живут в переписке, не в продажах</span></div>
+      <div class="row"><b class="pt-num" data-cnt="45" data-sfx=" дн.">0</b><span>студенческий корпус в Швеции — рынок не знает</span></div>
+      <div class="row"><b>ISO·TÜV</b><span>сертификация, которой нет у конкурентов</span></div>
+    </section>
+
+    <!-- S2 · россыпь отпечатков (архив) -->
+    <div id="heapZone"></div>
+    <div class="obj" id="o-empty" data-stop="2" style="left:3436px;top:1068px;--r:-1.2deg">
+      <span>место<br>вашего<br>сайта</span>
+    </div>
+
+    <!-- S3 · стиль -->
+    <div id="swatchZone"></div>
+    <figure class="obj paper" id="o-ba" data-stop="3" style="left:4650px;top:640px;--r:.8deg">
+      <div class="cmp" id="baCmp">
+        <img src="img/complex-06.jpg" alt="">
+        <div class="after">
+          <img class="grade" src="img/complex-06.jpg" alt="" aria-hidden="true">
+          <div class="mh"><span class="mlab" style="color:var(--acc)">реализованные проекты</span><b>Корпус в эксплуатации</b><i>Смотреть кейс</i></div>
+        </div>
+        <span class="tag l">как пришло из WhatsApp</span>
+        <span class="tag r">как будет на сайте</span>
+        <div class="split"></div>
+      </div>
+      <figcaption>один и тот же кадр — исходник и его подача на будущем сайте</figcaption>
+    </figure>
+
+    <!-- S4–S6 · ключевые экраны будущего сайта -->
+    <figure class="obj page" data-stop="4" style="left:5650px;top:200px;--r:-.3deg">
+      <div class="cap">Будущий сайт · экран 01 <span>· главная</span></div>
+      <div class="frame" style="position:relative"><span class="pin" style="right:5%;top:24%">1</span><span class="pin" style="left:36%;top:57%">2</span><span class="pin" style="left:10%;top:76%">3</span><div class="bar"><i></i><i></i><i></i><span>rusfinans.ru</span></div>
+      <div class="pg">
+        <div class="pnav"><b>РУСФИНАНС</b><span>Решения</span><span>Каталог</span><span>Проекты</span><span class="sp"></span><span class="tel">+7 981 ···</span><span class="cta">Рассчитать</span></div>
+        <div class="hero"><img src="img/complex-02.jpg" alt=""><i class="ov"></i>
+          <h1>Модульные здания под задачу вашего бизнеса</h1>
+          <p class="sub">Общежития, вахтовые городки, столовые, санблоки. От проекта до заселения — 45 дней.</p>
+          <div class="btns"><span class="cta">Собрать здание</span><span class="gbtn">Смотреть проекты</span></div>
+        </div>
+        <div class="strip"><div><b>ISO·TÜV</b>сертификация</div><div><b>45 дней</b>до сдачи</div><div><b>50+ лет</b>ресурс корпуса</div><div><b>РФ·ЕС</b>география</div></div>
+        <div class="sect"><div class="sh">Решения по задачам</div>
+          <div class="tiles">
+            <div class="tile"><img src="img/complex-01.jpg" alt=""><span>Общежития</span></div>
+            <div class="tile"><img src="img/module-out-01.jpg" alt=""><span>Вахтовые городки</span></div>
+            <div class="tile"><img src="img/interior-01.jpg" alt=""><span>Столовые</span></div>
+          </div></div>
+      </div></div>
+                        <div class="feats">
+    <div class="feat"><b><i>1</i>Кино-заставка</b><p>Первый экран открывается 6-секундным видео монтажа и растворяется в фото. Динамика с первой секунды.</p></div>
+    <div class="feat"><b><i>2</i>Живые цифры</b><p>Счётчики тянутся из CRM: сданные объекты, дни до ближайшей сдачи. Данные, а не декорация.</p></div>
+    <div class="feat"><b><i>3</i>Вход по задачам</b><p>Не каталог модулей, а сценарии клиента: «расселить 200 человек» ведёт сразу к решению.</p></div>
+  </div>
+</figure>
+
+    <figure class="obj page" data-stop="5" style="left:6690px;top:200px;--r:.3deg">
+      <div class="cap">Будущий сайт · экран 02 <span>· конфигуратор — заявка с техзаданием</span></div>
+      <div class="frame" style="position:relative"><span class="pin" style="left:47%;top:44%">1</span><span class="pin" style="right:6%;top:64%">2</span><span class="pin" style="left:9%;top:30%">3</span><div class="bar"><i></i><i></i><i></i><span>rusfinans.ru/configurator</span></div>
+      <div class="pg">
+        <div class="pnav"><b>РУСФИНАНС</b><span>Конфигуратор</span><span class="sp"></span><span class="tel">шаг 2 из 3</span></div>
+        <div class="conf">
+          <div class="cpanel">
+            <span class="lab">Назначение</span>
+            <div class="chips2"><span class="chip on">Общежитие</span><span class="chip">Вахта</span><span class="chip">Столовая</span><span class="chip">A-frame</span><span class="chip">Баня</span></div>
+            <span class="lab">Этажей — 3</span>
+            <div class="fr"><i style="left:62%"></i></div>
+            <span class="lab">Длина — 5 модулей</span>
+            <div class="fr"><i style="left:48%"></i></div>
+            <span class="lab">Дополнительно</span>
+            <div class="chips2"><span class="chip on">Столовая</span><span class="chip on">Санблок</span><span class="chip">КПП</span></div>
+          </div>
+          <div class="ciso"><svg id="pgIso" viewBox="0 0 560 430"></svg></div>
+          <div class="cres">
+            <span class="lab">Ваш объект</span>
+            <div class="row"><span>Модулей</span><b>30</b></div>
+            <div class="row"><span>Площадь</span><b>420 м²</b></div>
+            <div class="row"><span>Мест</span><b>120</b></div>
+            <div class="row"><span>Срок</span><b>от 60 дн.</b></div>
+            <div class="row"><span>Бюджет</span><b>по запросу</b></div>
+            <span class="cta" style="text-align:center;margin-top:.5rem">Получить КП по этой конфигурации</span>
+            <span class="lab" style="text-align:center;color:#5F6B87">менеджер получит все параметры</span>
+          </div>
+        </div>
+      </div></div>
+                        <div class="feats">
+    <div class="feat"><b><i>1</i>Живая изометрия</b><p>Здание перечерчивается при каждом изменении — графика из этой презентации переезжает на сайт.</p></div>
+    <div class="feat"><b><i>2</i>Заявка = техзадание</b><p>В CRM падает конфигурация: назначение, этажность, состав. Менеджер звонит подготовленным.</p></div>
+    <div class="feat"><b><i>3</i>Без прайса — по вашей политике</b><p>Вместо цен — вилка бюджета после контакта. Конфигуратор продаёт решение, а не метры.</p></div>
+  </div>
+</figure>
+
+    <figure class="obj page" data-stop="6" style="left:7730px;top:200px;--r:-.2deg">
+      <div class="cap">Будущий сайт · экран 03 <span>· кейс — Швеция за 45 дней</span></div>
+      <div class="frame" style="position:relative"><span class="pin" style="left:26%;top:36%">1</span><span class="pin" style="left:47%;top:91%">2</span><span class="pin" style="right:7%;top:56%">3</span><div class="bar"><i></i><i></i><i></i><span>rusfinans.ru/projects/sweden</span></div>
+      <div class="pg">
+        <div class="pnav"><b>РУСФИНАНС</b><span>Проекты</span><span class="sp"></span><span class="tel">кейс 01</span></div>
+        <div class="case2">
+          <div class="ba2">
+            <img src="img/site-01.jpg" alt="">
+            <span class="half"><img src="img/complex-01.jpg" alt=""></span>
+            <span class="mid"></span>
+            <span class="bt" style="left:.6rem">день 38 · монтаж</span>
+            <span class="bt" style="right:.6rem">день 45 · сдан</span>
+          </div>
+          <div class="kv">
+            <h2>Студенческий кампус, Швеция</h2>
+            <div class="row"><i>64 модуля</i><i>4 этажа</i><i>144 места</i><i>45 дней</i></div>
+            <p>Корпус для университетского кампуса: производство в цеху параллельно с фундаментом, доставка морем, монтаж — этаж в день. Приёмка по нормам ЕС с первого предъявления.</p>
+            <span class="cta">Хочу такой же срок</span>
+          </div>
+        </div>
+        <div class="tl2">
+          <div class="sh">Хроника проекта · перетащите бегунок</div>
+          <div class="tlbar">
+            <i style="--g:5">площадка</i><i style="--g:21" class="on">производство</i><i style="--g:5">доставка</i><i style="--g:9">монтаж</i><i style="--g:5">пуск</i>
+            <span class="knob"></span>
+          </div>
+        </div>
+      </div></div>
+                        <div class="feats">
+    <div class="feat"><b><i>1</i>До / после</b><p>Слайдер прямо в кейсе: стройплощадка против сданного корпуса. Доказательство вместо обещаний.</p></div>
+    <div class="feat"><b><i>2</i>Скраббер стройки</b><p>Посетитель проматывает 45 дней проекта. Каждый кейс превращается в фильм.</p></div>
+    <div class="feat"><b><i>3</i>Документы приёмки</b><p>Акты и сертификаты прикреплены к кейсу — для тендерных отделов и банков это решает.</p></div>
+  </div>
+</figure>
+
+    <!-- S5 · коллекция -->
+    <section class="obj paper" id="o-coll" data-stop="7">
+      <div class="pk">каталог · лист 05</div>
+      <h2 style="font-size:34px">Пять резиденций одного <span class="em">почерка</span>.</h2>
+      <div class="grid">
+        <div id="tyList"></div>
+        <div>
+          <svg id="isoArt" viewBox="0 0 900 620"></svg>
+          <div class="ctr" id="ctrls"></div>
+          <div class="ctr">
+            <button class="brass ghost" id="explBtn" aria-pressed="false">Разнести</button>
+            <button class="brass ghost" id="redrawBtn">Перечертить</button>
+          </div>
+        </div>
+        <div class="side" id="prodCard"></div>
+      </div>
+    </section>
+
+    <!-- S6 · стройка -->
+    <section class="obj paper" id="o-build" data-stop="8">
+      <div class="top">
+        <div>
+          <div class="pk">хроника · лист 06</div>
+          <h2>Сорок пять дней — и в окнах <span class="em">загорается свет</span>.</h2>
+        </div>
+        <div class="day"><b class="pt-num" id="dayN">1</b><span>день проекта</span></div>
+      </div>
+      <svg id="siteArt" viewBox="0 0 1200 480" preserveAspectRatio="xMidYMax meet"></svg>
+      <div class="phases" id="phases"></div>
+      <div class="srow">
+        <button class="brass ghost" id="playDay">▶ Проиграть</button>
+        <input type="range" id="dayR" min="0" max="45" step="0.1" value="1" aria-label="День проекта">
+      </div>
+      <p class="note" id="dayNote"></p>
+      <div class="stamp" id="stamp">Сдано · день 45</div>
+      <div class="ev" id="evid">
+        <figure class="print"><div class="win"><img src="img/site-01.jpg" alt=""><img class="duo" src="img/site-01.jpg" alt="" aria-hidden="true"></div><figcaption>факт · монтаж</figcaption></figure>
+        <figure class="print"><div class="win"><img src="img/complex-01.jpg" alt=""><img class="duo" src="img/complex-01.jpg" alt="" aria-hidden="true"></div><figcaption>факт · корпус сдан</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- S7 · планировка + лупа -->
+    <figure class="obj print" id="o-plan" data-stop="9">
+      <div class="win" id="planWin">
+        <img src="img/plan-03.jpg" alt="Планировка" id="planImg">
+        <img class="duo" src="img/plan-03.jpg" alt="" aria-hidden="true" id="planDuo">
+        <div id="planPts"></div>
+      </div>
+      <figcaption id="planCap">гранд-студия · 28 м²</figcaption>
+      <div class="thumbs" id="planThumbs"></div>
+    </figure>
+    <section class="obj paper" id="o-zoneCard" data-stop="9">
+      <div class="pk">зона · отделка</div>
+      <div id="zoneInfo"></div>
+      <div class="zchips" id="zChips"></div>
+    </section>
+
+    <!-- S8 · два входа -->
+    <figure class="obj print folder" data-stop="10" style="left:840px;top:1700px;--r:-1.6deg">
+      <div class="win"><img src="img/complex-02.jpg" alt="">
+        <div class="ovl">
+          <span class="mlab">для бизнеса · b2b</span>
+          <h3>Общежития. Вахта.<br>Столовые. Санблоки.</h3>
+          <p>Объект под задачу — от санблока до корпуса на двести мест. Проект, производство, монтаж — одни руки.</p>
+          <div class="row"><span>ISO · TÜV</span><span>44-ФЗ / 223-ФЗ</span><span>РФ и Европа</span></div>
+        </div>
+      </div>
+      <figcaption>вход первый</figcaption>
+      <span class="brass">Рассчитать проект</span>
+    </figure>
+    <figure class="obj print folder" data-stop="10" style="left:1420px;top:1770px;--r:1.8deg">
+      <div class="win"><img src="img/aframe-01.jpg" alt="">
+        <div class="ovl">
+          <span class="mlab">для жизни · b2c</span>
+          <h3>Дома. A-frame. Бани.</h3>
+          <p>Готовый объект на ваш участок: привезли, подключили, живёте. Свет и отделка уже внутри.</p>
+          <div class="row"><span>от 30 дней</span><span>под ключ</span><span>зима — не вопрос</span></div>
+        </div>
+      </div>
+      <figcaption>вход второй</figcaption>
+      <span class="brass">Подобрать дом</span>
+    </figure>
+
+    <!-- S9 · контракт -->
+    <section class="obj paper" id="o-contract" data-stop="11">
+      <div class="pk">протокол · лист 09</div>
+      <h2>Семь вопросов — и через неделю <span class="em">прототипы</span>.</h2>
+      <div id="qs"></div>
+      <div class="road" id="road"></div>
+    </section>
+
+    <!-- декор -->
+    <svg class="obj" id="o-ruler" viewBox="0 0 1200 46" aria-hidden="true"></svg>
+    <svg class="obj" id="o-compass" viewBox="0 0 190 190" aria-hidden="true"></svg>
+    <i class="penc" style="left:2380px;top:1210px;width:340px;transform:rotate(8deg)"></i>
+    <i class="penc" style="left:4420px;top:1180px;width:260px;transform:rotate(-14deg)"></i>
+  </div>
+</div>
+
+<div id="lamp"></div>
+
+<header class="hud">
+  <span class="brand"><b>NORVALDA</b> × <b>РУСФИНАНС</b></span>
+  <span class="rule"></span>
+  <span class="sname" id="sname"><b>00</b> · Титул</span>
+  <span class="rule"></span>
+  <button class="play" id="autoBtn" aria-pressed="false">▶ автопоказ</button>
+  <div class="dock" id="dock"><span class="mlab" style="color:var(--ink3)">палитра</span></div>
+</header>
+
+<div id="fin">
+  <div class="in">
+    <div class="mlab" style="color:var(--ink3)">norvalda × русфинанс</div>
+    <h1>Весь проект — на одном столе.<br>Теперь у зданий есть <span class="em">лицо</span>.</h1>
+    <p>Утверждаем направление и палитру — и раскладываем так каждую страницу будущего сайта.</p>
+    <button class="brass dark" data-go="0">↺ Вернуться к титулу</button>
+    <div class="sig"><span>sales@norvalda.com</span><span>концепция · август 2026</span><span>один файл · офлайн · 62 ваших кадра</span></div>
+  </div>
+</div>
+
+<button class="nav prev" id="prevBtn" aria-label="Назад">‹</button>
+<button class="nav next" id="nextBtn" aria-label="Дальше">›</button>
+<div class="tline" id="tline"></div>
+<div class="hint">колесо · стрелки · drag по столу</div>
+<div id="mm"><span class="cap">стол</span><span class="vp"></span></div>
+<div class="cur" id="cur"><span class="ring"></span></div>
+
+<script>
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+var lerp=function(a,b,t){return a+(b-a)*t};
+var W=8800,H=2880;
+
+/* ================= ПАЛИТРЫ ================= */
+var PALS=[
+ {n:"Янтарь",d:"Жёлтый акцент вашего референса — энергия и заметность.",
+  acc:"#FFD21F",acc2:"#FFE45C",soft:"rgba(255,210,31,.13)",onAcc:"#161305"},
+ {n:"Терракота",d:"Тёплый закатный оттенок — уют дома, к которому хочется вернуться.",
+  acc:"#FF8A5C",acc2:"#FFB08C",soft:"rgba(255,138,92,.14)",onAcc:"#1A0E08"},
+ {n:"Мёд",d:"Спокойное тёплое золото — премиальный, сдержанный тон.",
+  acc:"#F2B84B",acc2:"#FFD98C",soft:"rgba(242,184,75,.14)",onAcc:"#191204"}
+];
+function applyPal(k){
+  var p=PALS[k], s=document.documentElement.style;
+  s.setProperty("--acc",p.acc); s.setProperty("--acc2",p.acc2);
+  s.setProperty("--soft",p.soft); s.setProperty("--onAcc",p.onAcc);
+  $$(".sw").forEach(function(b,i){b.setAttribute("aria-pressed",i===k?"true":"false")});
+  $$(".swatch").forEach(function(b,i){b.setAttribute("aria-pressed",i===k?"true":"false")});
+}
+PALS.forEach(function(p,i){
+  var b=document.createElement("button"); b.className="sw"; b.title=p.n;
+  b.setAttribute("aria-label","Палитра "+p.n);
+  b.style.background="conic-gradient(from 210deg,"+p.acc+","+p.acc2+","+p.acc+")";
+  b.addEventListener("click",function(){applyPal(i)});
+  $("#dock").appendChild(b);
+});
+
+/* ================= КАМЕРА ================= */
+var STOPS=[
+ {x:1300,y:580, s:.95, n:"Титул"},
+ {x:2470,y:640, s:1.02,n:"Диагноз"},
+ {x:3430,y:620, s:.78, n:"Архив"},
+ {x:4650,y:620, s:.82, n:"Стиль"},
+ {x:6140,y:625, s:.84, n:"Сайт · главная"},
+ {x:7180,y:580, s:.84, n:"Сайт · конфигуратор"},
+ {x:8220,y:560, s:.84, n:"Сайт · кейс"},
+ {x:5570,y:1990,s:.8,  n:"Коллекция"},
+ {x:4180,y:2000,s:.8,  n:"45 дней"},
+ {x:2620,y:1980,s:.72, n:"Резиденция"},
+ {x:1400,y:2060,s:.88, n:"Входы"},
+ {x:470, y:2030,s:.87, n:"Протокол"},
+ {x:4400,y:1480,s:.125,n:"Общий вид"}
+];
+var world=$("#world"), stage=$("#stage");
+var cam={x:STOPS[0].x,y:STOPS[0].y,s:STOPS[0].s};
+var tgt={x:cam.x,y:cam.y,s:cam.s};
+var cur=0, auto=null;
+
+function render(){
+  var vw=innerWidth, vh=innerHeight;
+  world.style.transform="translate("+(vw/2-cam.x*cam.s)+"px,"+(vh/2-cam.y*cam.s)+"px) scale("+cam.s+")";
+  /* миникарта */
+  var mw=192,mh=81;
+  var vp=$("#mm .vp");
+  vp.style.width=clamp(vw/cam.s/W*mw,6,mw)+"px";
+  vp.style.height=clamp(vh/cam.s/H*mh,5,mh)+"px";
+  vp.style.left=clamp((cam.x-vw/cam.s/2)/W*mw,0,mw)+"px";
+  vp.style.top=clamp((cam.y-vh/cam.s/2)/H*mh,0,mh)+"px";
+}
+var lastT=performance.now();
+function tick(now){
+  var dt=Math.min(.25,(now-lastT)/1000); lastT=now;
+  var k=reduce?1:1-Math.exp(-dt*5.2);
+  cam.x=lerp(cam.x,tgt.x,k); cam.y=lerp(cam.y,tgt.y,k); cam.s=lerp(cam.s,tgt.s,k*.92);
+  render();
+}
+(function loop(now){ tick(now); requestAnimationFrame(loop) })(performance.now());
+setInterval(function(){                     /* страховка: rAF заморожен в фоновом окне */
+  var now=performance.now();
+  if(now-lastT>120) tick(now);
+},150);
+window.snap=function(){cam.x=tgt.x;cam.y=tgt.y;cam.s=tgt.s;render()};
+
+function syncUI(){
+  $$(".tick").forEach(function(t,i){t.classList.toggle("on",i===cur)});
+  $("#sname").innerHTML="<b>"+String(cur).padStart(2,"0")+"</b> · "+STOPS[cur].n;
+  $$("#mm .dot").forEach(function(d,i){d.classList.toggle("on",i===cur)});
+  $("#fin").classList.toggle("show",cur===STOPS.length-1);
+}
+function goTo(n){
+  n=clamp(n,0,STOPS.length-1);
+  cur=n;
+  tgt.x=STOPS[n].x; tgt.y=STOPS[n].y; tgt.s=STOPS[n].s;
+  history.replaceState(null,"","#"+n);
+  syncUI();
+  if(n===8&&window.playChronicle){ clearTimeout(window._pcT);
+    window._pcT=setTimeout(playChronicle,650) }        /* подлетели — и стройка пошла сама */
+  else if(window.stopPlay) stopPlay();
+  runCnt();
+}
+function runCnt(){
+  $$("[data-cnt]").forEach(function(el){
+    if(el._done)return;
+    var r=el.getBoundingClientRect();
+    if(r.top>innerHeight||r.bottom<0)return;
+    el._done=true;
+    var to=+el.dataset.cnt,sfx=el.dataset.sfx||"",t0=null;
+    if(reduce){el.textContent=to+sfx;return}
+    (function st(ts){if(t0===null)t0=ts;
+      var p=Math.min(1,(ts-t0)/1100),e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(to*e)+sfx;
+      if(p<1)requestAnimationFrame(st)})(performance.now());
+  });
+}
+
+/* призрачные номера на стене — ориентиры остановок */
+STOPS.forEach(function(st,i){
+  if(i===STOPS.length-1)return;
+  var g=document.createElement("div"); g.className="gnum";
+  g.textContent=String(i).padStart(2,"0");
+  g.style.left=(st.x-560)+"px"; g.style.top=(st.y-560)+"px";
+  world.insertBefore(g,world.firstChild);
+});
+
+/* таймлиния + миникарта точки */
+STOPS.forEach(function(st,i){
+  var b=document.createElement("button"); b.className="tick";
+  b.innerHTML='<span class="lbl">'+st.n+'</span><i></i><span>'+String(i).padStart(2,"0")+'</span>';
+  b.addEventListener("click",function(){stopAuto();goTo(i)});
+  $("#tline").appendChild(b);
+  var d=document.createElement("i"); d.className="dot";
+  d.style.left=(st.x/W*192)+"px"; d.style.top=(st.y/H*81)+"px";
+  $("#mm").appendChild(d);
+});
+$("#mm").addEventListener("click",function(e){
+  var r=this.getBoundingClientRect();
+  stopAuto();
+  tgt.x=clamp((e.clientX-r.left)/192*W,0,W);
+  tgt.y=clamp((e.clientY-r.top)/81*H,0,H);
+});
+$("#prevBtn").addEventListener("click",function(){stopAuto();goTo(cur-1)});
+$("#nextBtn").addEventListener("click",function(){stopAuto();goTo(cur+1)});
+$$("[data-go]").forEach(function(b){b.addEventListener("click",function(){stopAuto();goTo(+b.dataset.go)})});
+
+/* колесо: снап по остановкам; внутри скроллов — нативно */
+var acc=0,accT=null;
+addEventListener("wheel",function(e){
+  var sc=e.target.closest&&e.target.closest(".scr");
+  if(sc){
+    var dn=sc.scrollTop+sc.clientHeight<sc.scrollHeight-2, up=sc.scrollTop>2;
+    if((e.deltaY>0&&dn)||(e.deltaY<0&&up))return;
+  }
+  e.preventDefault();
+  acc+=e.deltaY;
+  clearTimeout(accT); accT=setTimeout(function(){acc=0},260);
+  if(Math.abs(acc)>110){stopAuto();goTo(cur+(acc>0?1:-1));acc=0}
+},{passive:false});
+
+/* drag-пан по столу */
+(function(){
+  var down=null;
+  stage.addEventListener("pointerdown",function(e){
+    if(e.target.closest("button,input,.scr,.zone,.split,.thumbs"))return;
+    down={x:e.clientX,y:e.clientY,cx:tgt.x,cy:tgt.y};
+    stage.classList.add("drag"); stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener("pointermove",function(e){
+    if(!down)return;
+    tgt.x=clamp(down.cx-(e.clientX-down.x)/cam.s,0,W);
+    tgt.y=clamp(down.cy-(e.clientY-down.y)/cam.s,0,H);
+  });
+  ["pointerup","pointercancel"].forEach(function(ev){
+    stage.addEventListener(ev,function(){down=null;stage.classList.remove("drag")});
+  });
+  stage.addEventListener("dblclick",function(e){
+    var o=e.target.closest("[data-stop]");
+    if(o){stopAuto();goTo(+o.dataset.stop)}
+  });
+})();
+
+/* клавиатура */
+addEventListener("keydown",function(e){
+  if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+  if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" "){e.preventDefault();stopAuto();goTo(cur+1)}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();stopAuto();goTo(cur-1)}
+  else if(e.key==="ArrowDown"){e.preventDefault();tgt.y=clamp(tgt.y+160/cam.s,0,H);stopAuto()}
+  else if(e.key==="ArrowUp"){e.preventDefault();tgt.y=clamp(tgt.y-160/cam.s,0,H);stopAuto()}
+  else if(e.key==="Home"){stopAuto();goTo(0)}
+  else if(e.key==="End"){stopAuto();goTo(STOPS.length-1)}
+  else if(/^[0-9]$/.test(e.key)){stopAuto();goTo(+e.key)}
+  else if(e.key==="p"||e.key==="P"||e.key==="з"||e.key==="З"){auto?stopAuto():startAuto()}
+});
+function startAuto(){
+  if(reduce)return;
+  $("#autoBtn").setAttribute("aria-pressed","true");
+  auto=setInterval(function(){cur<STOPS.length-1?goTo(cur+1):stopAuto()},7500);
+}
+function stopAuto(){
+  if(!auto)return;
+  clearInterval(auto);auto=null;
+  $("#autoBtn").setAttribute("aria-pressed","false");
+}
+$("#autoBtn").addEventListener("click",function(){auto?stopAuto():startAuto()});
+
+/* курсор + лампа */
+(function(){
+  var c=$("#cur"),l=$("#lamp"),x=0,y=0,tx=innerWidth/2,ty=innerHeight/2,lx=tx,ly=ty,on=false;
+  addEventListener("pointermove",function(e){
+    tx=e.clientX;ty=e.clientY;
+    if(!on){on=true;c.classList.add("on")}
+    var t=e.target;
+    c.classList.toggle("big",!!(t.closest&&t.closest("button,a,input,.zone,.split,.tile,.print,.swatch")));
+  },{passive:true});
+  (function loop(){
+    x=lerp(x,tx,.3);y=lerp(y,ty,.3);
+    lx=lerp(lx,tx,.05);ly=lerp(ly,ty,.05);
+    c.style.transform="translate("+x+"px,"+y+"px)";
+    l.style.transform="translate("+lx+"px,"+ly+"px)";
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ================= АРХИВ: россыпь ================= */
+var HEAP=[
+ ["complex-02","длинный фасад"],["complex-03","цветные панели"],["complex-04","многоэтажный корпус"],
+ ["complex-05","галереи"],["complex-06","в эксплуатации"],["site-02","сборка"],
+ ["module-out-01","мобильный модуль"],["plan-01","планировка студии"],["house-01","дом-студия"],
+ ["aframe-02","a-frame"],["sauna-01","парная"],["interior-01","кухня-столовая"],
+ ["interior-02","спальня"],["bath-01","санузел"]
+];
+(function(){
+  var zone=$("#heapZone");
+  var R=function(seed){var s=seed;return function(){s=(s*9301+49297)%233280;return s/233280}}(7);
+  HEAP.forEach(function(h,i){
+    var f=document.createElement("figure");
+    f.className="obj print heap"; f.dataset.stop=2;
+    var col=i%4,row=Math.floor(i/4);
+    var x=2830+col*302+R()*44-22, y=165+row*298+R()*44-22, r=(R()*9-4.5);
+    f.style.left=x+"px"; f.style.top=y+"px"; f.style.setProperty("--r",r.toFixed(1)+"deg");
+    f.style.zIndex=10+i;
+    f.innerHTML='<div class="win"><img loading="lazy" src="img/'+h[0]+'.jpg" alt=""><img class="duo" loading="lazy" src="img/'+h[0]+'.jpg" alt="" aria-hidden="true"></div><figcaption>'+h[1]+'</figcaption>';
+    zone.parentNode.insertBefore(f,zone);
+  });
+})();
+
+/* ================= СТИЛЬ: свотчи ================= */
+(function(){
+  var z=$("#swatchZone");
+  PALS.forEach(function(p,i){
+    var b=document.createElement("button");
+    b.className="obj paper swatch"; b.dataset.stop=3;
+    b.style.left=(4330+i*10)+"px"; b.style.top=(150+i*118)+"px";
+    b.style.setProperty("--r",(i*2.2-2.2)+"deg"); b.style.zIndex=20-i;
+    b.setAttribute("aria-pressed",i===0?"true":"false");
+    b.innerHTML='<div class="pk">палитра 0'+(i+1)+'</div><b>'+p.n+'</b>'+
+      '<span class="chips"><i style="background:#0C1120"></i><i style="background:#18213A"></i><i style="background:'+p.acc+'"></i><i style="background:'+p.acc2+'"></i></span>'+
+      '<span>'+p.d+'</span>';
+    b.addEventListener("click",function(){applyPal(i)});
+    z.parentNode.insertBefore(b,z);
+  });
+  var ba=$("#baCmp"),drag=false;
+  function setCut(e){
+    var r=ba.getBoundingClientRect();
+    ba.style.setProperty("--cut",clamp((e.clientX-r.left)/r.width*100,6,94)+"%");
+  }
+  ba.addEventListener("pointerdown",function(e){drag=true;setCut(e);ba.setPointerCapture(e.pointerId);e.stopPropagation()});
+  ba.addEventListener("pointermove",function(e){if(drag)setCut(e)});
+  ["pointerup","pointercancel"].forEach(function(ev){ba.addEventListener(ev,function(){drag=false})});
+})();
+
+/* ================= ИЗОМЕТРИЯ НА СТРАНИЦЕ КОНФИГУРАТОРА ================= */
+(function(){
+  var NS="http://www.w3.org/2000/svg", svg=$("#pgIso"); if(!svg)return;
+  var CX=.866,S=52,OX=280,OY=330;
+  function pt(x,y,z){return [OX+(x-z)*CX*S, OY+(x+z)*.5*S-y*S]}
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e}
+  function line(a,b,cls){var A=pt.apply(null,a),B=pt.apply(null,b);
+    el("path",{d:"M"+A[0]+" "+A[1]+"L"+B[0]+" "+B[1],"class":cls||"dr"})}
+  function face(vs,cls){el("polygon",{points:vs.map(function(v){return pt.apply(null,v).join(",")}).join(" "),"class":cls})}
+  var L=5,F=3,D=2;
+  face([[0,F,0],[L,F,0],[L,F,D],[0,F,D]],"ff");
+  face([[L,0,0],[L,F,0],[L,F,D],[L,0,D]],"ff");
+  face([[0,0,D],[L,0,D],[L,F,D],[0,F,D]],"ff");
+  line([0,F,0],[L,F,0]); line([L,F,0],[L,F,D]); line([L,F,D],[0,F,D]); line([0,F,D],[0,F,0]);
+  line([L,0,0],[L,F,0]); line([L,0,D],[L,F,D]); line([0,0,D],[0,F,D]);
+  line([L,0,0],[L,0,D]); line([0,0,D],[L,0,D]);
+  var i,f;
+  for(i=1;i<L;i++){ line([i,F,0],[i,F,D],"dr thin"); line([i,0,D],[i,F,D],"dr thin") }
+  line([0,F,1],[L,F,1],"dr thin"); line([L,0,1],[L,F,1],"dr thin");
+  for(f=1;f<F;f++){ line([L,f,0],[L,f,D],"dr thin"); line([0,f,D],[L,f,D],"dr thin") }
+  face([[2,F,0],[3,F,0],[3,F,1],[2,F,1]],"fa");
+  line([2,F,0],[3,F,0],"dr acc"); line([3,F,0],[3,F,1],"dr acc");
+  line([3,F,1],[2,F,1],"dr acc"); line([2,F,1],[2,F,0],"dr acc");
+  var A=pt(0,-.35,D),B=pt(L,-.35,D);
+  el("path",{d:"M"+A[0]+" "+(A[1]+8)+"L"+B[0]+" "+(B[1]+8),"class":"dr dim"});
+  var t=el("text",{x:(A[0]+B[0])/2,y:A[1]+26,"font-size":10,"text-anchor":"middle"});
+  t.textContent="60 000 мм";
+})();
+
+/* ================= КОЛЛЕКЦИЯ ================= */
+var ISO=(function(){
+  var NS="http://www.w3.org/2000/svg", svg=$("#isoArt");
+  var CX=.866,S=46,OX=450,OY=470;
+  function pt(x,y,z){return [OX+(x-z)*CX*S, OY+(x+z)*.5*S-y*S]}
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e}
+  function grp(){var g=el("g",{});svg.appendChild(g);return g}
+  function line(g,a,b,cls){
+    var A=pt.apply(null,a),B=pt.apply(null,b);
+    g.appendChild(el("path",{d:"M"+A[0]+" "+A[1]+"L"+B[0]+" "+B[1],"class":cls||"dr"}))
+  }
+  function face(g,vs,cls){
+    g.appendChild(el("polygon",{points:vs.map(function(v){return pt.apply(null,v).join(",")}).join(" "),"class":cls}))
+  }
+  function solid(g,x,y,z,w,h,d,opt){
+    opt=opt||{};
+    var P=function(a,b,cls){line(g,a,b,cls)};
+    face(g,[[x,y+h,z],[x+w,y+h,z],[x+w,y+h,z+d],[x,y+h,z+d]],"ff");
+    face(g,[[x+w,y,z],[x+w,y+h,z],[x+w,y+h,z+d],[x+w,y,z+d]],"ff");
+    face(g,[[x,y,z+d],[x+w,y,z+d],[x+w,y+h,z+d],[x,y+h,z+d]],"ff");
+    P([x,y+h,z],[x+w,y+h,z]); P([x+w,y+h,z],[x+w,y+h,z+d]);
+    P([x+w,y+h,z+d],[x,y+h,z+d]); P([x,y+h,z+d],[x,y+h,z]);
+    P([x+w,y,z],[x+w,y+h,z]); P([x+w,y,z+d],[x+w,y+h,z+d]); P([x,y,z+d],[x,y+h,z+d]);
+    P([x+w,y,z],[x+w,y,z+d]); P([x,y,z+d],[x+w,y,z+d]);
+    var i,f,r,u=opt.u||1;
+    if(opt.nx)for(i=1;i<opt.nx;i++){
+      P([x+i*u,y+h,z],[x+i*u,y+h,z+d],"dr thin");
+      P([x+i*u,y,z+d],[x+i*u,y+h,z+d],"dr thin");
+    }
+    if(opt.nz)for(r=1;r<opt.nz;r++){
+      P([x,y+h,z+r*u],[x+w,y+h,z+r*u],"dr thin");
+      P([x+w,y,z+r*u],[x+w,y+h,z+r*u],"dr thin");
+    }
+    if(opt.ny)for(f=1;f<opt.ny;f++){
+      P([x+w,y+f*u,z],[x+w,y+f*u,z+d],"dr thin");
+      P([x,y+f*u,z+d],[x+w,y+f*u,z+d],"dr thin");
+    }
+    if(opt.cell){
+      var cx=x+opt.cell[0]*u, cz=z+opt.cell[1]*u, ty=y+h;
+      face(g,[[cx,ty,cz],[cx+u,ty,cz],[cx+u,ty,cz+u],[cx,ty,cz+u]],"fa");
+      P([cx,ty,cz],[cx+u,ty,cz],"dr acc"); P([cx+u,ty,cz],[cx+u,ty,cz+u],"dr acc");
+      P([cx+u,ty,cz+u],[cx,ty,cz+u],"dr acc"); P([cx,ty,cz+u],[cx,ty,cz],"dr acc");
+    }
+  }
+  function prism(g,x,y,z,w,h,d,acc){
+    var rx=x+w/2;
+    var v=[[x,y,z],[x+w,y,z],[x+w,y,z+d],[x,y,z+d],[rx,y+h,z],[rx,y+h,z+d]];
+    face(g,[v[1],v[4],v[5],v[2]],"ff");
+    face(g,[v[3],v[2],v[5]],"ff");
+    line(g,v[0],v[1]); line(g,v[1],v[2]); line(g,v[2],v[3]); line(g,v[3],v[0]);
+    line(g,v[1],v[4]); line(g,v[2],v[5]); line(g,v[3],v[5]);
+    line(g,v[4],v[5],acc?"dr acc":"dr");
+  }
+  function dim(g,a,b,label,off){
+    off=off||0;
+    var A=pt.apply(null,a),B=pt.apply(null,b);
+    g.appendChild(el("path",{d:"M"+A[0]+" "+(A[1]+off)+"L"+B[0]+" "+(B[1]+off),"class":"dr dim"}));
+    [[A[0],A[1]+off],[B[0],B[1]+off]].forEach(function(q){
+      g.appendChild(el("path",{d:"M"+q[0]+" "+(q[1]-5)+"L"+q[0]+" "+(q[1]+5),"class":"dr dim"}))});
+    var t=el("text",{x:(A[0]+B[0])/2,y:(A[1]+B[1])/2+off+16,"font-size":10,"text-anchor":"middle"});
+    t.textContent=label; g.appendChild(t);
+  }
+  return {svg:svg,grp:grp,solid:solid,prism:prism,dim:dim};
+})();
+var TYPES=[
+ {id:"dorm",n:"Жилой корпус",s:"общежитие · кампус",photo:"complex-01",
+  blurb:"Корпус на сто двадцать жителей собирается быстрее, чем согласуется ипотека.",
+  ctrl:[{k:"len",n:"Длина",min:3,max:8,v:5},{k:"fl",n:"Этажи",min:1,max:4,v:3}],
+  build:function(o){
+    if(!o.x){
+      ISO.solid(o.g,0,0,0,o.len,o.fl,2,{u:1,nx:o.len,nz:2,ny:o.fl,cell:[Math.floor(o.len/2),0]});
+    } else {
+      for(var f=0;f<o.fl;f++)
+        ISO.solid(o.g,0,f*1.55,0,o.len,1,2,{u:1,nx:o.len,nz:2,cell:f===o.fl-1?[Math.floor(o.len/2),0]:null});
+    }
+    ISO.dim(o.g,[0,-.15,2],[o.len,-.15,2],(o.len*12)+" 000 мм",14);
+  },
+  read:function(o){var c=o.len*2*o.fl;return [["Модулей",c],["Площадь",c*14+" м²"],["Мест",c*4],["Срок","от "+(30+c)+" дн."]]}},
+ {id:"camp",n:"Городок",s:"жильё + столовая + санблок",photo:"module-out-01",
+  blurb:"Посёлок под ключ: жильё, столовая, санитарный блок — и пост охраны у въезда.",
+  ctrl:[{k:"len",n:"Бараки",min:3,max:6,v:4}],
+  build:function(o){
+    var s=o.x?1.1:0;
+    ISO.solid(o.g,0,0,0,o.len,1,1,{u:1,nx:o.len});
+    ISO.solid(o.g,0,0,2.2+s,o.len,1,1,{u:1,nx:o.len});
+    ISO.prism(o.g,o.len+.9+s,0,0,2.1,.85,2.1,true);
+    ISO.solid(o.g,o.len+.9+s,0,2.6+s,1,1,1,{});
+    ISO.solid(o.g,-1.6-s,0,1,0.8,0.8,0.8,{});
+    ISO.dim(o.g,[-1.6-s,-.5,0],[o.len+3+s,-.5,0],"городок на "+(o.len*16)+" чел.",6);
+  },
+  read:function(o){var c=o.len*2+4;return [["Модулей",c],["Жилых",o.len*2],["Мест",o.len*16],["Срок","от "+(35+c)+" дн."]]}},
+ {id:"canteen",n:"Столовая",s:"пищеблок под поток",photo:"interior-01",
+  blurb:"Сто двенадцать посадок и полная кухня — привезли, подключили, накрыли.",ctrl:[],
+  build:function(o){
+    var s=o.x?.8:0;
+    ISO.solid(o.g,0,0,0,4,1,2,{u:1,nx:4,nz:2});
+    ISO.prism(o.g,0,1+s,0,4,.7,2,true);
+    ISO.dim(o.g,[0,-.5,0],[4,-.5,0],"48 000 мм",6);
+  },
+  read:function(){return [["Модулей",8],["Площадь","112 м²"],["Посадок",112],["Срок","от 40 дн."]]}},
+ {id:"aframe",n:"Шале A-frame",s:"панельный каркас",photo:"aframe-01",
+  blurb:"Панорама в кровле, терраса к воде. Шале, которое приезжает готовым.",ctrl:[],
+  build:function(o){
+    var s=o.x?.9:0;
+    ISO.solid(o.g,0,0,0,2.2,.28,2.6,{});
+    ISO.prism(o.g,0,.28+s,0,2.2,2.1,2.6,true);
+    ISO.solid(o.g,2.3+s,0,.5,.9,.07,1.6,{});
+    ISO.dim(o.g,[0,-.5,0],[2.2,-.5,0],"7 200 мм",6);
+  },
+  read:function(){return [["Этажа",2],["Площадь","54 м²"],["Гостей",4],["Срок","от 30 дн."]]}},
+ {id:"bath",n:"Баня",s:"парная + душ + терраса",photo:"sauna-01",
+  blurb:"Парная в кедре, душ и терраса. Суббота теперь начинается дома.",ctrl:[],
+  build:function(o){
+    var s=o.x?.7:0;
+    ISO.solid(o.g,0,0,0,2.4,1,1,{u:1.2,nx:2});
+    ISO.prism(o.g,0,1+s,0,2.4,.55,1,true);
+    ISO.solid(o.g,2.5+s,0,.1,.8,.07,.8,{});
+    ISO.solid(o.g,.35,1.55+s,.3,.14,.55,.14,{});
+    ISO.dim(o.g,[0,-.5,0],[2.4,-.5,0],"6 000 мм",6);
+  },
+  read:function(){return [["Модуль","20 фт"],["Площадь","14 м²"],["Мест",4],["Срок","от 25 дн."]]}}
+];
+var tyI=0,tyState={},exploded=false;
+function buildType(){
+  var svg=ISO.svg; while(svg.firstChild)svg.removeChild(svg.firstChild);
+  var t=TYPES[tyI],st=tyState[t.id]||{};
+  t.ctrl.forEach(function(c){if(st[c.k]===undefined)st[c.k]=c.v});
+  tyState[t.id]=st;
+  var g=ISO.grp();
+  t.build({g:g,len:st.len,fl:st.fl,x:exploded});
+  var bb=svg.getBBox();
+  svg.setAttribute("viewBox",(bb.x-40)+" "+(bb.y-40)+" "+(bb.width+80)+" "+(bb.height+80));
+  $("#prodCard").innerHTML=
+    '<figure class="print"><div class="win"><img src="img/'+t.photo+'.jpg" alt=""><img class="duo" src="img/'+t.photo+'.jpg" alt="" aria-hidden="true"></div><figcaption>'+t.n.toLowerCase()+'</figcaption></figure>'+
+    '<h3>'+t.n+'</h3><p>'+t.blurb+'</p>'+
+    '<dl>'+t.read(st).map(function(r){return "<dt>"+r[0]+"</dt><dd>"+r[1]+"</dd>"}).join("")+'</dl>';
+  var ct=$("#ctrls"); ct.innerHTML="";
+  t.ctrl.forEach(function(c){
+    var l=document.createElement("label");
+    l.innerHTML='<span>'+c.n+'</span><b>'+st[c.k]+'</b>';
+    var r=document.createElement("input"); r.type="range"; r.min=c.min; r.max=c.max; r.value=st[c.k];
+    r.addEventListener("input",function(){st[c.k]=+r.value;l.querySelector("b").textContent=r.value;buildType()});
+    l.appendChild(r); ct.appendChild(l);
+  });
+  $("#explBtn").setAttribute("aria-pressed",exploded?"true":"false");
+}
+(function(){
+  var list=$("#tyList");
+  TYPES.forEach(function(t,i){
+    var b=document.createElement("button"); b.className="ty";
+    b.setAttribute("aria-pressed",i===0?"true":"false");
+    b.innerHTML="<em>0"+(i+1)+"</em><b>"+t.n+"</b><span>"+t.s+"</span>";
+    b.addEventListener("click",function(){
+      tyI=i;exploded=false;
+      $$("#tyList .ty").forEach(function(o,k){o.setAttribute("aria-pressed",k===i?"true":"false")});
+      buildType();
+    });
+    list.appendChild(b);
+  });
+  $("#explBtn").addEventListener("click",function(){exploded=!exploded;buildType()});
+  $("#redrawBtn").addEventListener("click",buildType);
+  buildType();
+})();
+
+/* ================= СТРОЙКА ================= */
+var SITE=(function(){
+  var NS="http://www.w3.org/2000/svg", svg=$("#siteArt");
+  function el(t,a,cls){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);
+    if(cls)e.setAttribute("class",cls);svg.appendChild(e);return e}
+  var GY=420;
+  el("path",{d:"M30 "+GY+" L1170 "+GY},"dr");
+  for(var hx=44;hx<1170;hx+=34) el("path",{d:"M"+hx+" "+GY+" l-12 12"},"dr thin");
+  el("path",{d:"M70 "+GY+" V300 H310 V"+GY},"dr");
+  el("path",{d:"M70 300 L110 272 L150 300 L190 272 L230 300 L270 272 L310 300"},"dr");
+  el("path",{d:"M96 "+GY+" v-52 h44 v52"},"dr thin");
+  var ft=el("text",{x:190,y:GY-14,"font-size":10,"text-anchor":"middle"}); ft.textContent="производство";
+  var stock=[];
+  for(var s2=0;s2<12;s2++){
+    var sx=340+(s2%3)*56, sy=GY-26-Math.floor(s2/3)*32;
+    stock.push(el("rect",{x:sx,y:sy,width:50,height:26,opacity:0},"dr"));
+  }
+  var st2=el("text",{x:424,y:GY-160,"font-size":10,"text-anchor":"middle"}); st2.textContent="склад";
+  var piles=[];
+  for(var p2=0;p2<8;p2++) piles.push(el("path",{d:"M"+(716+p2*52)+" "+GY+" v16",opacity:0},"dr acc"));
+  var MW=62,MH=44,BX=700,mods=[],wins=[];
+  for(var f2=0;f2<3;f2++)for(var i2=0;i2<6;i2++){
+    var mx=BX+i2*MW, my=GY-8-(f2+1)*MH;
+    var gm=el("g",{opacity:0});
+    function r2(a){var e=document.createElementNS(NS,"rect");for(var k in a)e.setAttribute(k,a[k]);gm.appendChild(e);return e}
+    r2({x:mx,y:my,width:MW-4,height:MH-3,"class":"dr"});
+    r2({x:mx+9,y:my+11,width:15,height:17,"class":"dr thin"});
+    r2({x:mx+34,y:my+11,width:15,height:17,"class":"dr thin"});
+    var lit=r2({x:mx+9,y:my+11,width:40,height:17,fill:"#E8B54D",opacity:0});
+    mods.push(gm); wins.push(lit);
+  }
+  var bt2=el("text",{x:BX+MW*3,y:GY-8-MH*3-14,"font-size":10,"text-anchor":"middle"}); bt2.textContent="корпус · 36 модулей";
+  var crane=el("g",{opacity:0});
+  function cp(d){var p=document.createElementNS(NS,"path");p.setAttribute("d",d);p.setAttribute("class","dr acc");crane.appendChild(p);return p}
+  cp("M640 "+GY+" V96"); cp("M600 "+GY+" V96"); cp("M600 96 H1120");
+  cp("M600 132 H640 M600 168 H640 M600 204 H640 M600 240 H640 M600 276 H640 M600 312 H640 M600 348 H640 M600 384 H640");
+  cp("M560 96 H600"); cp("M560 96 V128");
+  var hook=document.createElementNS(NS,"path"); hook.setAttribute("class","dr acc");
+  hook.setAttribute("d","M900 96 V200"); crane.appendChild(hook);
+  var load=document.createElementNS(NS,"rect");
+  load.setAttribute("width",MW-8);load.setAttribute("height",MH-8);load.setAttribute("class","dr acc");
+  load.setAttribute("opacity",0); crane.appendChild(load);
+  var truck=el("g",{opacity:0});
+  function tp(d){var p=document.createElementNS(NS,"path");p.setAttribute("d",d);p.setAttribute("class","dr");truck.appendChild(p)}
+  tp("M0 -16 h92 v16 h-92 z"); tp("M92 -12 h24 l12 8 v4 h-36 z");
+  tp("M18 0 a9 9 0 1 0 .1 0"); tp("M72 0 a9 9 0 1 0 .1 0"); tp("M104 0 a9 9 0 1 0 .1 0");
+  var tload=document.createElementNS(NS,"rect");
+  tload.setAttribute("x",6);tload.setAttribute("y",-44);tload.setAttribute("width",80);tload.setAttribute("height",28);
+  tload.setAttribute("class","dr acc"); truck.appendChild(tload);
+  return {GY:GY,stock:stock,piles:piles,mods:mods,wins:wins,crane:crane,hook:hook,load:load,
+          truck:truck,tload:tload,MW:MW,MH:MH,BX:BX,TOTAL:36};
+})();
+var PHASES=[
+ {n:"площадка",a:0,b:5,note:"Планировка и винтовые сваи. Без бетона — без выдержки, зима не мешает."},
+ {n:"производство",a:5,b:26,note:"Модули идут по конвейеру в цеху — параллельно с площадкой. В этом вся экономика."},
+ {n:"доставка",a:26,b:31,note:"Тралы возят готовые модули: три рейса — весь корпус на площадке."},
+ {n:"монтаж",a:31,b:40,note:"Кран ставит модуль за модулем. Этаж в день — обычный темп."},
+ {n:"инженерия",a:40,b:44,note:"Сети, отопление, свет. В окнах загорается жизнь."},
+ {n:"сдача",a:44,b:45,note:"День 45: корпус на 144 места принят. Швеция подтверждает — это ваш темп."}
+];
+function phAt(d){for(var i=0;i<PHASES.length;i++)if(d<=PHASES[i].b)return i;return PHASES.length-1}
+function phT(i,d){var p=PHASES[i];return clamp((d-p.a)/(p.b-p.a),0,1)}
+function renderDay(d){
+  var S=SITE;
+  $("#dayN").textContent=Math.max(1,Math.round(d));
+  var k=phAt(d);
+  $$("#phases .phz").forEach(function(e,i){
+    e.classList.toggle("on",i===k);
+    e.classList.toggle("done",d>PHASES[i].b);
+  });
+  $("#dayNote").textContent=PHASES[k].note;
+  var pk=phT(0,d);
+  S.piles.forEach(function(p,i){p.setAttribute("opacity",pk*8>i?1:0)});
+  var made=Math.round(clamp((d-5)/21,0,1)*S.TOTAL);
+  var shipped=Math.round(clamp((d-26)/5,0,1)*S.TOTAL);
+  var placed=Math.round(clamp((d-31)/9,0,1)*S.TOTAL);
+  shipped=Math.max(shipped,placed); made=Math.max(made,shipped);
+  var inStock=clamp(made-shipped,0,12);
+  S.stock.forEach(function(r,i){r.setAttribute("opacity",i<inStock?1:0)});
+  var placedVis=Math.ceil(placed/2);
+  S.mods.forEach(function(g,i){g.setAttribute("opacity",i<placedVis?1:0)});
+  var mount=(k===3),mt=phT(3,d);
+  S.crane.setAttribute("opacity",(d>29.5&&d<41.5)?1:0);
+  if(placed<S.TOTAL&&mount){
+    var idx=Math.min(17,placedVis);
+    var col=idx%6,row=Math.floor(idx/6);
+    var tx=S.BX+col*S.MW+(S.MW-4)/2;
+    var hy=S.GY-8-(row+1)*S.MH;
+    var frac=1-((mt*S.TOTAL)%1);
+    var lift=frac*70;
+    S.hook.setAttribute("d","M"+tx+" 96 V"+(hy-lift+4));
+    S.load.setAttribute("x",tx-(S.MW-8)/2);
+    S.load.setAttribute("y",hy-lift+4);
+    S.load.setAttribute("opacity",1);
+  } else S.load.setAttribute("opacity",0);
+  var del=(k===2),dt=phT(2,d);
+  S.truck.setAttribute("opacity",del?1:0);
+  if(del){
+    var trip=(dt*3)%1;
+    S.truck.setAttribute("transform","translate("+lerp(430,620,trip)+" "+S.GY+")");
+    S.tload.setAttribute("opacity",trip<.82?1:0);
+  }
+  var lit=clamp((d-40)/4,0,1)*18;
+  S.wins.forEach(function(w,i){
+    var on=i<lit;
+    w.setAttribute("opacity",on?.92:0);
+    w.style.filter=on?"drop-shadow(0 0 6px #E8B54D)":"";
+  });
+  $("#evid").classList.toggle("show",d>=44);
+  $("#stamp").classList.toggle("show",d>=44.6);
+}
+var stopPlay=function(){};
+(function(){
+  var ph=$("#phases");
+  PHASES.forEach(function(p){
+    var b=document.createElement("button"); b.className="phz"; b.textContent=p.n;
+    b.style.flexGrow=Math.max(p.b-p.a,3);
+    b.addEventListener("click",function(){$("#dayR").value=p.a+.01;renderDay(p.a+.01);stopPlay()});
+    ph.appendChild(b);
+  });
+  var r=$("#dayR"),playing=null;
+  r.addEventListener("input",function(){renderDay(+r.value);stopPlay()});
+  stopPlay=function(){if(playing){clearInterval(playing);playing=null;$("#playDay").textContent="▶ Проиграть"}};
+  function startPlay(from){
+    stopPlay();
+    $("#playDay").textContent="⏸ Пауза";
+    var t0=performance.now(), dur=(45-from)/45*9000;
+    /* setInterval вместо rAF: не замерзает при перекрытом/фоновом окне */
+    playing=setInterval(function(){
+      var p=clamp((performance.now()-t0)/dur,0,1);
+      var d=lerp(from,45,p);
+      r.value=d; renderDay(d);
+      if(p>=1)stopPlay();
+    },33);
+  }
+  $("#playDay").addEventListener("click",function(e){
+    e.stopPropagation();
+    if(playing){stopPlay();return}
+    startPlay(+r.value>=44.8?0:+r.value);
+  });
+  /* автозапуск хроники при входе на остановку */
+  window.playChronicle=function(){ r.value=0; renderDay(0); startPlay(0) };
+  renderDay(1);
+})();
+
+/* ================= ПЛАНИРОВКА + ЛУПА ================= */
+var PLANS=[
+ {img:"plan-03",cap:"гранд-студия · 28 м²",
+  zones:[
+   {x:33,y:22,n:"Кухня",a:"4,8 м²",d:"Рабочая линия у окна: варочная поверхность, мойка, вытяжка. Столешница — камень.",
+    s:[["Гарнитур","в тон дерева"],["Техника","встроенная"],["Свет","подсветка линии"]]},
+   {x:66,y:26,n:"Санузел",a:"4,6 м²",d:"Душ за стеклом, подвесная сантехника, тёплый пол под керамогранитом.",
+    s:[["Душ","стекло · трап в полу"],["Пол","тёплый"],["Вентиляция","принудительная"]]},
+   {x:39,y:55,n:"Столовая",a:"зона",d:"Круглый стол на четверых в центре света. Окно в пол — с обеих сторон день.",
+    s:[["Стол","на 4 персоны"],["Свет","подвес над столом"]]},
+   {x:60,y:72,n:"Гостиная",a:"зона",d:"Глубокий диван, плед, торшер. Вечером здесь самый тёплый свет в доме.",
+    s:[["Диван","160 см, раскладной"],["Пол","дуб · тёплый"]]}
+  ]},
+ {img:"plan-04",cap:"люкс со спальней · 28 м²",
+  zones:[
+   {x:30,y:21,n:"Кухня",a:"4,8 м²",d:"Полная рабочая линия и мягкий свет над столешницей.",
+    s:[["Гарнитур","камень + дерево"],["Техника","встроенная"]]},
+   {x:66,y:24,n:"Ванная",a:"5,2 м²",d:"Редкость для модульного формата — полноценная ванна. И душ за стеклом рядом.",
+    s:[["Ванна","1600 мм"],["Душ","стекло"],["Пол","тёплый"]]},
+   {x:63,y:62,n:"Спальня",a:"9,1 м²",d:"Изолированная спальня с двуспальной кроватью и мягким изголовьем.",
+    s:[["Кровать","160×200"],["Окно","в изголовье"],["Двери","раздвижные"]]},
+   {x:30,y:64,n:"Гостиная",a:"зона",d:"Диван напротив окна, столик, вечерний торшер.",
+    s:[["Диван","160 см"],["Пол","дуб"]]}
+  ]},
+ {img:"plan-01",cap:"студия · спальный блок",
+  zones:[
+   {x:9,y:18,n:"Гардероб",a:"зона",d:"Встроенный шкаф на всю стену — чемоданы и сезонные вещи скрыты.",
+    s:[["Фасады","под потолок"],["Наполнение","полки + штанга"]]},
+   {x:27,y:52,n:"Спальня",a:"9,0 м²",d:"Кровать у окна, тёплый ковёр, приглушённый свет бра.",
+    s:[["Кровать","двуспальная"],["Пол","дуб · тёплый"]]},
+   {x:63,y:44,n:"Санузел",a:"4,6 м²",d:"Плитка соты, душ, стиральная машина в нише — всё на четырёх метрах.",
+    s:[["Душ","поддон + стекло"],["Стиральная","в нише"],["Полотенцесушитель","есть"]]}
+  ]}
+];
+(function(){
+  var pts=$("#planPts"),info=$("#zoneInfo"),chips=$("#zChips"),th=$("#planThumbs"),cap=$("#planCap");
+  var win=$("#planWin"),img=$("#planImg");
+  var curP=0;
+  function showZone(i){
+    var z=PLANS[curP].zones[i];
+    $$("#planPts .zone").forEach(function(p,k){p.setAttribute("aria-pressed",k===i?"true":"false")});
+    $$("#zChips .zc").forEach(function(c,k){c.setAttribute("aria-pressed",k===i?"true":"false")});
+    info.innerHTML='<span class="area">'+PLANS[curP].cap+' · '+z.a+'</span><h3>'+z.n+'</h3><p>'+z.d+'</p><dl>'+
+      z.s.map(function(r){return "<dt>"+r[0]+"</dt><dd>"+r[1]+"</dd>"}).join("")+"</dl>";
+  }
+  function loadPlan(k){
+    curP=k;
+    var p=PLANS[k];
+    img.src="img/"+p.img+".jpg";
+    $("#planDuo").src="img/"+p.img+".jpg";
+    cap.textContent=p.cap;
+    pts.innerHTML=""; chips.innerHTML="";
+    p.zones.forEach(function(z,i){
+      var b=document.createElement("button"); b.className="zone";
+      b.style.left=z.x+"%"; b.style.top=z.y+"%";
+      b.setAttribute("aria-label",z.n);
+      b.innerHTML="<i></i><b>"+z.n+"</b>";
+      ["mouseenter","click","focus"].forEach(function(ev){b.addEventListener(ev,function(){showZone(i)})});
+      pts.appendChild(b);
+      var c=document.createElement("button"); c.className="zc"; c.textContent=z.n;
+      c.addEventListener("click",function(){showZone(i)});
+      chips.appendChild(c);
+    });
+    $$("#planThumbs button").forEach(function(o,i){o.setAttribute("aria-pressed",i===k?"true":"false")});
+    showZone(0);
+  }
+  PLANS.forEach(function(p,i){
+    var b=document.createElement("button");
+    b.setAttribute("aria-pressed",i===0?"true":"false");
+    b.title=p.cap;
+    b.innerHTML='<img src="img/'+p.img+'.jpg" alt="'+p.cap+'">';
+    b.addEventListener("click",function(e){e.stopPropagation();loadPlan(i)});
+    th.appendChild(b);
+  });
+  loadPlan(0);
+})();
+
+/* ================= КОНТРАКТ ================= */
+var QS=[
+ ["От чьего имени говорит сайт — «РусФинанс» или «СПЕКТР»?","Гипотеза: бренд один, юрлицо — в реквизитах. От ответа зависят домен и документы."],
+ ["A-frame и бани — продукт или планы?","Если продукт — контур «Для жизни» идёт в первый релиз. Если планы — закладываем архитектурно."],
+ ["Швеция — разовый кейс или системный экспорт?","Если системный — английская версия сразу, кейс становится центральным."],
+ ["Работаете по 44-ФЗ / 223-ФЗ?","Тогда нужен раздел для тендерных отделов: документы, спецификации, опыт."],
+ ["45 дней — норма или рекорд?","Срок идёт на первый экран. Он должен быть честным и повторяемым."],
+ ["Куда падают заявки?","Форма квалифицирующая: назначение, места, регион, срок — продажи получают ТЗ."],
+ ["Кто наполняет сайт после запуска?","Определяет, нужна ли админка. Дешевле решить сейчас."]
+];
+(function(){
+  var w=$("#qs");
+  QS.forEach(function(q,i){
+    var d=document.createElement("div"); d.className="q";
+    d.innerHTML='<button aria-expanded="false"><span class="n">'+String(i+1).padStart(2,"0")+
+      '</span><p>'+q[0]+'</p><i>+</i></button><div class="a"><div>'+q[1]+'</div></div>';
+    d.querySelector("button").addEventListener("click",function(){
+      var o=d.classList.toggle("open");
+      this.setAttribute("aria-expanded",o?"true":"false");
+    });
+    w.appendChild(d);
+  });
+  var R=[["Концепция","сейчас"],["Прототипы","неделя"],["Дизайн","2 недели"],["Разработка","4–5 недель"],["Запуск","и передача"]];
+  $("#road").innerHTML=R.map(function(r,i){
+    return '<div class="step'+(i===0?" now":"")+'"><b>'+r[0]+'</b><span>'+r[1]+'</span></div>';
+  }).join("");
+})();
+
+/* ================= ДЕКОР ================= */
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  var ru=$("#o-ruler");
+  for(var x=0;x<=1200;x+=20){
+    var h=x%100===0?18:(x%50===0?12:7);
+    var l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",x);l.setAttribute("y1",40);l.setAttribute("x2",x);l.setAttribute("y2",40-h);
+    l.setAttribute("stroke","currentColor");l.setAttribute("stroke-width",x%100===0?1.4:.8);
+    ru.appendChild(l);
+    if(x%100===0&&x>0){
+      var t=document.createElementNS(NS,"text");
+      t.setAttribute("x",x);t.setAttribute("y",14);t.setAttribute("text-anchor","middle");
+      t.setAttribute("font-size",9);t.setAttribute("fill","currentColor");
+      t.setAttribute("font-family","Segoe UI");t.setAttribute("letter-spacing",".1em");
+      t.textContent=x/100;ru.appendChild(t);
+    }
+  }
+  var base=document.createElementNS(NS,"line");
+  base.setAttribute("x1",0);base.setAttribute("y1",40);base.setAttribute("x2",1200);base.setAttribute("y2",40);
+  base.setAttribute("stroke","currentColor");base.setAttribute("stroke-width",1.4);
+  ru.appendChild(base);
+  var co=$("#o-compass");
+  function cel(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);co.appendChild(e);return e}
+  cel("circle",{cx:95,cy:95,r:80,fill:"none",stroke:"currentColor","stroke-width":1.2});
+  cel("circle",{cx:95,cy:95,r:62,fill:"none",stroke:"currentColor","stroke-width":.7});
+  cel("path",{d:"M95 25 L103 95 L95 165 L87 95 Z",fill:"currentColor",opacity:.8});
+  cel("path",{d:"M25 95 L95 87 L165 95 L95 103 Z",fill:"currentColor",opacity:.45});
+  var tN=cel("text",{x:95,y:16,"text-anchor":"middle","font-size":13,fill:"currentColor","font-family":"Palatino Linotype"});
+  tN.textContent="N";
+})();
+
+/* ================= СТАРТ ================= */
+applyPal(0);
+var h=parseInt((location.hash||"").replace("#",""),10);
+if(!isNaN(h)){cur=clamp(h,0,STOPS.length-1)}
+cam.x=STOPS[cur].x+400; cam.y=STOPS[cur].y+300; cam.s=STOPS[cur].s*.6;   /* лёгкий подлёт при открытии */
+goTo(cur);
+setTimeout(runCnt,900);
+</script>
+</body>
+</html>
