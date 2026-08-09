@@ -858,12 +858,25 @@ var cam={x:STOPS[0].x,y:STOPS[0].y,s:STOPS[0].s};
 var tgt={x:cam.x,y:cam.y,s:cam.s};
 var cur=0, auto=null;
 
+/* на общем виде фото подменяются миниатюрами: 51 полноразмерный кадр Safari пересчитывает медленно */
+function farImages(on){
+  $$("#world img:not(.duo)").forEach(function(im){
+    var rel=im.dataset.rel||im.getAttribute("src")||"";
+    if(rel.indexOf("img/")!==0)return;
+    var name=rel.slice(4);
+    if(on){
+      if(im._thumbed)return;
+      im._thumbed=1; im._full=im.getAttribute("src");
+      im.src=(window.__IMG&&window.__IMG["thumb/"+name])||("img/thumb/"+name);
+    } else if(im._thumbed){ im._thumbed=0; im.src=im._full }
+  });
+}
 var isFar=false;
 function render(){
   var vw=innerWidth, vh=innerHeight;
   world.style.transform="translate("+(vw/2-cam.x*cam.s)+"px,"+(vh/2-cam.y*cam.s)+"px) scale("+cam.s+")";
   var far=cam.s<.34;
-  if(far!==isFar){isFar=far; world.classList.toggle("far",far)}
+  if(far!==isFar){isFar=far; world.classList.toggle("far",far); farImages(far)}
   /* миникарта */
   var mw=192,mh=81;
   var vp=$("#mm .vp");
@@ -875,7 +888,8 @@ function render(){
 var lastT=performance.now(), finA=0;
 function tick(now){
   var dt=clamp((now-lastT)/1000,0,.25); lastT=now;   /* нулевой пол: отрицательный dt разгонял камеру */
-  var k=reduce?1:1-Math.exp(-dt*5.2);
+  var rate=(tgt.s<.34||cam.s<.34)?11:5.2;            /* к общему виду — короче полёт, меньше тяжёлых кадров */
+  var k=reduce?1:1-Math.exp(-dt*rate);
   cam.x=lerp(cam.x,tgt.x,k); cam.y=lerp(cam.y,tgt.y,k); cam.s=lerp(cam.s,tgt.s,k*.92);
   var want=(cur===STOPS.length-1)?1:0;
   if(finA!==want){
@@ -1589,6 +1603,13 @@ var f0=frameFor(cur);
 cam.x=f0.x+400; cam.y=f0.y+300; cam.s=f0.s*.6;   /* лёгкий подлёт при открытии */
 goTo(cur);
 setTimeout(runCnt,900);
+setTimeout(function(){                       /* миниатюры в кэш заранее — общий вид открывается мгновенно */
+  if(window.__IMG)return;
+  $$("#world img:not(.duo)").forEach(function(im){
+    var rel=im.dataset.rel||im.getAttribute("src")||"";
+    if(rel.indexOf("img/")===0){var p=new Image(); p.src="img/thumb/"+rel.slice(4)}
+  });
+},2500);
 
 /* окно меняется или дозагрузились фото текущего стопа — перекадровка */
 function reframe(){var f=frameFor(cur);tgt.x=f.x;tgt.y=f.y;tgt.s=f.s}
