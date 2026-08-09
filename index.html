@@ -38,8 +38,10 @@ img{display:block; max-width:none}
 #stage{position:fixed; inset:0; overflow:hidden; cursor:grab;
   background:radial-gradient(130% 110% at 50% -10%,#131C33 0%,#0B1020 55%,#070B16 100%)}
 #stage.drag{cursor:grabbing}
+/* без will-change: 8800×2880 на Retina — это слой 17600×5760 пикселей,
+   он не влезает в текстуру GPU и рассыпается чёрными полосами */
 #world{position:absolute; left:0; top:0; width:8800px; height:2880px;
-  transform-origin:0 0; will-change:transform;
+  transform-origin:0 0;
   background:
     radial-gradient(46% 40% at 20% 16%,rgba(255,210,31,.05),transparent 70%),
     radial-gradient(42% 46% at 78% 80%,rgba(255,160,70,.05),transparent 70%),
@@ -49,6 +51,11 @@ img{display:block; max-width:none}
 #world:before{content:""; position:absolute; inset:0; pointer-events:none;
   background:radial-gradient(72% 62% at 50% 44%,transparent 42%,rgba(0,0,0,.5) 100%)}
 .edge,.screw,#o-ruler,#o-compass,.penc{display:none}
+/* дальний план (общий вид): снимаем всё, что дорого растрировать и всё равно не видно */
+#world.far:before{display:none}
+#world.far .gnum{display:none}
+#world.far *{box-shadow:none!important; backdrop-filter:none!important;
+  filter:none!important; text-shadow:none!important}
 
 /* тёплая лампа за курсором — уют без ретро */
 #lamp{position:fixed; left:0; top:0; width:1500px; height:1500px; margin:-750px 0 0 -750px;
@@ -851,9 +858,12 @@ var cam={x:STOPS[0].x,y:STOPS[0].y,s:STOPS[0].s};
 var tgt={x:cam.x,y:cam.y,s:cam.s};
 var cur=0, auto=null;
 
+var isFar=false;
 function render(){
   var vw=innerWidth, vh=innerHeight;
   world.style.transform="translate("+(vw/2-cam.x*cam.s)+"px,"+(vh/2-cam.y*cam.s)+"px) scale("+cam.s+")";
+  var far=cam.s<.34;
+  if(far!==isFar){isFar=far; world.classList.toggle("far",far)}
   /* миникарта */
   var mw=192,mh=81;
   var vp=$("#mm .vp");
